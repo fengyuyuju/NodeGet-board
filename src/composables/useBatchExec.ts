@@ -70,21 +70,36 @@ export async function queryTaskResults(
   const taskIds = pendingTasks.map((r) => r.taskId);
 
   try {
-    const queryResults: any[] = await conn.call("task_query", {
-      token: backend.token,
-      task_data_query: { condition: taskIds.map((id) => ({ task_id: id })) },
-    });
+    // const queryResults: any[] = await conn.call("task_query", {
+    //   token: backend.token,
+    //   task_data_query: { condition: taskIds.map((id) => ({ task_id: id })) },
+    // });
+    const queryResultsArray: any[] = await conn.callBatch(
+      taskIds.map((id) => {
+        return {
+          method: "task_query",
+          params: {
+            token: backend.token,
+            task_data_query: {
+              condition: [{ task_id: id }],
+            },
+          },
+        };
+      }),
+    );
 
-    for (const qr of queryResults) {
-      const r = taskResults.find((t) => t.taskId === qr.task_id);
-      if (!r) continue;
+    for (const queryResults of queryResultsArray) {
+      for (const qr of queryResults) {
+        const r = taskResults.find((t) => t.taskId === qr.task_id);
+        if (!r) continue;
 
-      if (qr.success && qr.task_event_result?.execute !== undefined) {
-        r.status = 1;
-        r.result = qr.task_event_result.execute;
-      } else if (qr.success === false) {
-        r.status = -1;
-        r.error = qr.error_message || "Task failed";
+        if (qr.success && qr.task_event_result?.execute !== undefined) {
+          r.status = 1;
+          r.result = qr.task_event_result.execute;
+        } else if (qr.success === false) {
+          r.status = -1;
+          r.error = qr.error_message || "Task failed";
+        }
       }
     }
   } catch (e: any) {

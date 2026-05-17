@@ -51,6 +51,20 @@ const toggle = (uuid: string, checked: boolean) => {
   }
 };
 
+const isAllSelected = () => {
+  return (
+    props.nodes.length > 0 && localSelected.value.length === props.nodes.length
+  );
+};
+
+const toggleSelectAll = () => {
+  if (isAllSelected()) {
+    localSelected.value = [];
+  } else {
+    localSelected.value = props.nodes.map((node) => node.uuid);
+  }
+};
+
 const handleConfirm = () => {
   emit("confirm", [...localSelected.value]);
   emit("update:open", false);
@@ -67,6 +81,19 @@ const handleConfirm = () => {
         }}</DialogDescription>
       </DialogHeader>
       <div class="max-h-72 overflow-y-auto space-y-2 py-2">
+        <Button
+          v-if="nodes.length > 0"
+          variant="ghost"
+          size="sm"
+          class="ml-1"
+          @click="toggleSelectAll"
+        >
+          {{
+            isAllSelected()
+              ? t("dashboard.cron.deselectAll")
+              : t("dashboard.cron.selectAll")
+          }}
+        </Button>
         <div
           v-for="node in nodes"
           :key="node.uuid"

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import LatencyChart from "@/components/node/latency/latency.vue";
 import LatencyQualityCanvas from "@/components/node/latency/LatencyQualityCanvas.vue";
 import { useBackendStore } from "@/composables/useBackendStore";
+import { useCron } from "@/composables/useCron";
 import { useCronHistory } from "@/composables/useCronHistory";
 import type { TaskQueryResult } from "@/composables/useCronHistory";
 import {
@@ -23,11 +24,13 @@ definePage({
 });
 
 const route = useRoute();
+const cron = useCron();
 const uuid = computed(() => (route.params as { uuid: string }).uuid);
 
 const { currentBackend } = useBackendStore();
 const { queryTask } = useCronHistory();
 
+const cronNames = ref<Set<string>>(new Set());
 const pingLoading = ref(false);
 const tcpPingLoading = ref(false);
 const pingData = ref<TaskQueryResult[]>([]);
@@ -116,7 +119,7 @@ function mergeAndTrim(
   for (const r of existing) if (r.timestamp >= cutoff) map.set(r.task_id, r);
   for (const r of incoming) if (r.timestamp >= cutoff) map.set(r.task_id, r);
   return [...map.values()]
-    .filter((v) => !!v.cron_source && v.cron_source !== "未知") // remove data not from cron
+    .filter((v) => !!v.cron_source && cronNames.value.has(v.cron_source)) // remove data not from cron
     .sort((a, b) => a.timestamp - b.timestamp);
 }
 
@@ -128,6 +131,10 @@ const fetchData = async () => {
       pingData.value = [];
       tcpPingData.value = [];
       return;
+    }
+
+    if (cronNames.value.size === 0) {
+      await refreshCron();
     }
 
     const now = Date.now();
@@ -188,12 +195,18 @@ const fetchData = async () => {
   }
 };
 
+async function refreshCron() {
+  const cl = await cron.list();
+  cronNames.value = new Set(cl.map((v) => v.name));
+}
+
 async function handleRefresh() {
   if (isRefreshing.value) return;
   pingData.value = [];
   tcpPingData.value = [];
   pingXRange.value = null;
   tcpPingXRange.value = null;
+  await refreshCron();
   await fetchData();
 }
 

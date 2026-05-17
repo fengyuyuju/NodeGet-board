@@ -98,8 +98,15 @@ watch(
     form.value.name = target?.name || "";
     form.value.ws_url = target?.agentConfigWsUrl || "";
     form.value.server_uuid = target?.uuid || "";
-    form.value.token =
-      (await preGenerateToken(props.nodeUUID, ref(target as ServerInfo))) || "";
+    form.value.token = props.upstream.token;
+
+    // preGenerateToken(props.nodeUUID, ref(target as ServerInfo))
+    //   .then(token => {
+    //     if(token){
+    //       form.value.token = token
+    //     }
+    //   })
+    //   .catch(() => null)
   },
   {
     immediate: true,

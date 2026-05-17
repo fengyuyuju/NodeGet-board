@@ -15,12 +15,14 @@ import {
 import { useKv } from "@/composables/useKv";
 import { useI18n } from "vue-i18n";
 import { useCron, taskToCronType } from "@/composables/useCron";
+import { useJsRuntime } from "@/composables/useJsRuntime";
 
 const props = defineProps<{ uuid: string }>();
 
 const { t } = useI18n();
 const kv = useKv();
 const cron = useCron();
+const jsRuntime = useJsRuntime();
 
 const loading = ref(false);
 const saveLoading = ref(false);
@@ -30,8 +32,6 @@ const storageDynamicSummary = ref<number | undefined>(undefined);
 const storageDynamic = ref<number | undefined>(undefined);
 const storageStatic = ref<number | undefined>(undefined);
 const storageAgentTask = ref<number | undefined>(undefined);
-
-let cleanCronName = "periodic-cleanup";
 
 const oneMinute = 60 * 1000;
 function tsToMinute(value: unknown) {
@@ -126,65 +126,15 @@ async function handleSave() {
 async function cleanExpiredData() {
   try {
     cleanLoading.value = true;
-    const tempName = crypto.randomUUID();
-    await cron.create({
-      name: tempName, // temp name
-      cron_expression: "* * * * * *",
-      cron_type: {
-        server: "clean_up_database",
+    await jsRuntime.runWorker("server-task-worker", "cron", {
+      task: {
+        name: "clean_up_database",
       },
     });
     await new Promise((r) => setTimeout(r, 2000));
-    await cron.remove(tempName);
     toast.success(t("dashboard.node.storage.cleanSuccess"));
   } catch (error) {
     if (error instanceof Error) toast.error(error.toString());
-  } finally {
-    cleanLoading.value = false;
-  }
-}
-async function handleCleanData() {
-  cleanLoading.value = true;
-  try {
-    kv.namespace.value = props.uuid;
-    const saved = {
-      static: storageStatic.value,
-      dynamic: storageDynamic.value,
-      agentTask: storageAgentTask.value,
-    };
-
-    await kv.setValueBatch([
-      { key: "database_limit_static_monitoring", value: 0 },
-      { key: "database_limit_dynamic_monitoring", value: 0 },
-      { key: "database_limit_agent_task", value: 0 },
-    ]);
-
-    await new Promise((r) => setTimeout(r, 2000));
-
-    const restoreItems: { key: string; value: unknown }[] = [];
-    if (saved.static !== undefined)
-      restoreItems.push({
-        key: "database_limit_static_monitoring",
-        value: saved.static,
-      });
-    if (saved.dynamic !== undefined)
-      restoreItems.push({
-        key: "database_limit_dynamic_monitoring",
-        value: saved.dynamic,
-      });
-    if (saved.agentTask !== undefined)
-      restoreItems.push({
-        key: "database_limit_agent_task",
-        value: saved.agentTask,
-      });
-
-    if (restoreItems.length > 0) {
-      await kv.setValueBatch(restoreItems);
-    }
-
-    toast.success(t("dashboard.node.storage.cleanSuccess"));
-  } catch (e: unknown) {
-    toast.error(e instanceof Error ? e.message : t("dashboard.saveFailed"));
   } finally {
     cleanLoading.value = false;
   }

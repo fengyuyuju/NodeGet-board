@@ -51,8 +51,8 @@ watch(
   (newResult, oldResult) => {
     const nextMap: Record<string, boolean> = {};
 
-    const isFirstInit =
-      (!oldResult || oldResult.length === 0) && newResult.length > 0;
+    const isFirstInit = false;
+    // (!oldResult || oldResult.length === 0) && newResult.length > 0;
 
     newResult.forEach((item, index) => {
       if (isFirstInit) {

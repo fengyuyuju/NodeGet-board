@@ -52,7 +52,7 @@ const defaultForm = () => ({
   agentTaskTarget: "",
   agentExecuteCommand: "",
   agentExecuteArgsText: "",
-  serverTaskType: "string" as "string" | "js_worker",
+  serverTaskType: "js_worker" as "string" | "js_worker",
   serverTask: "clean_up_database",
   jsWorkerName: "",
   jsWorkerTask: "",
@@ -645,7 +645,7 @@ const handleSave = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="string">System Task</SelectItem>
+                <!-- <SelectItem value="string">System Task</SelectItem> -->
                 <SelectItem value="js_worker">JS Worker</SelectItem>
               </SelectContent>
             </Select>

@@ -1,0 +1,283 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0f0f0f;
+  --color: #e5e5e5;
+  --muted: #888;
+  --card-bg: #1a1a1a;
+  --card-border: #2a2a2a;
+  --code-bg: #2a2a2a;
+  --code-color: #a78bfa;
+  --hint: #666;
+  --accent: #6d28d9;
+  --accent-light: #8b5cf6;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f9f9f9;
+    --color: #111;
+    --muted: #666;
+    --card-bg: #fff;
+    --card-border: #e5e5e5;
+    --code-bg: #f0f0f0;
+    --code-color: #7c3aed;
+    --hint: #999;
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--color);
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── header ── */
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 0 16px;
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 99px;
+}
+
+h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* ── card ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card h2 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* ── row ── */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+}
+
+.label {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.value {
+  color: var(--color);
+  text-align: right;
+}
+
+.mono {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 0.8rem;
+}
+
+.truncate {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── file list ── */
+.file-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+}
+
+.file-icon {
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-family: "SF Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--accent-light);
+  flex: 1;
+}
+
+.file-desc {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/* ── link grid ── */
+.link-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--code-bg);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.link-card:hover {
+  background: var(--card-border);
+}
+
+.link-title {
+  font-size: 0.875rem;
+  color: var(--color);
+  font-weight: 500;
+}
+
+.link-url {
+  font-family: "SF Mono", monospace;
+  font-size: 0.75rem;
+  color: var(--accent-light);
+}
+
+/* ── hint ── */
+.hint {
+  font-size: 0.8rem;
+  color: var(--hint);
+  line-height: 1.7;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: "SF Mono", monospace;
+  font-size: 0.78rem;
+  color: var(--code-color);
+}
+
+/* ── about page ── */
+.body-text {
+  font-size: 0.875rem;
+  color: var(--color);
+  line-height: 1.8;
+}
+
+.steps {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+.feature-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.feature-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.check {
+  color: #4ade80;
+  font-weight: 700;
+  width: 16px;
+  flex-shrink: 0;
+}
+
+/* ── back link ── */
+.back-link {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.back-link a {
+  color: var(--accent-light);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.back-link a:hover {
+  text-decoration: underline;
+}
+
+/* ── video ── */
+.demo-video {
+  width: 100%;
+  border-radius: 8px;
+  background: #000;
+  display: block;
+}
+
+/* ── footer ── */
+footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0 24px;
+  font-size: 0.8rem;
+  color: var(--hint);
+}

@@ -379,7 +379,7 @@ fetchVersion();
                   :description="t('dashboard.servers.refreshConfirmDesc')"
                   :confirm-text="t('dashboard.servers.refreshConfirm')"
                   :cancel-text="t('dashboard.servers.deleteCancel')"
-                  @confirm="afterServerCreate(backend)"
+                  @confirm="afterServerCreate(backend, true)"
                 >
                   <Button size="icon" variant="ghost" class="h-8 w-8">
                     <RefreshCw class="h-4 w-4" />

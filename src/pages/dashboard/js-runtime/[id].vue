@@ -289,6 +289,9 @@ const wsBaseUrl = computed(() => {
 const envVars = ref<{ key: string; value: string }[]>([]);
 const workerRoute = ref("");
 const cleanTime = ref("");
+const max_run_time = ref(60000);
+const max_stack_size = ref(2097152);
+const max_heap_size = ref(16777216);
 
 // Description State
 const descriptionEditOpen = ref(false);
@@ -421,6 +424,11 @@ const getWorkerFun = async () => {
       workerRoute.value = data.route || "";
       cleanTime.value =
         data.runtime_clean_time != null ? String(data.runtime_clean_time) : "";
+
+      max_run_time.value = data.max_run_time;
+      max_stack_size.value = data.max_stack_size;
+      max_heap_size.value = data.max_heap_size;
+
       envVars.value = Object.entries(data.env || {}).map(([key, value]) => ({
         key,
         value: String(value),
@@ -498,6 +506,10 @@ const updateWorkerContentFun = async (
       runtime_clean_time: latest.runtime_clean_time,
       env: envObj,
       description: latest.description || "",
+
+      max_run_time: latest.max_run_time || undefined,
+      max_stack_size: latest.max_stack_size || undefined,
+      max_heap_size: latest.max_heap_size || undefined,
     });
     toast.success(t("dashboard.jsRuntime.updateSuccess"));
     worker.value.content = content.value;
@@ -696,6 +708,9 @@ const updateWorkerSettingsFun = async () => {
       env: envObj,
       content: latest.content,
       description: latest.description || "",
+      max_run_time: max_run_time.value || undefined,
+      max_stack_size: max_stack_size.value || undefined,
+      max_heap_size: max_heap_size.value || undefined,
     });
     toast.success(t("dashboard.jsRuntime.updateSuccess"));
     await getWorkerFun();
@@ -718,6 +733,10 @@ const updateWorkerDescriptionFun = async () => {
       runtime_clean_time: latest.runtime_clean_time,
       env: latest.env || {},
       description: descriptionEditText.value,
+
+      max_run_time: latest.max_run_time || undefined,
+      max_stack_size: latest.max_stack_size || undefined,
+      max_heap_size: latest.max_heap_size || undefined,
     });
     toast.success("描述更新成功");
     worker.value.description = descriptionEditText.value;
@@ -1780,6 +1799,53 @@ const formatTime = (ts: number | null) => {
                   <Input
                     v-model="cleanTime"
                     :placeholder="t('dashboard.jsRuntime.settings.cleanTime')"
+                    class="flex-1 font-mono"
+                    type="number"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <!-- max limit -->
+            <Card>
+              <CardHeader>
+                <CardTitle>{{ t("max_run_time") }}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div class="flex gap-4 items-center">
+                  <Input
+                    v-model="max_run_time"
+                    :placeholder="t('max_run_time')"
+                    class="flex-1 font-mono"
+                    type="number"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>{{ t("max_stack_size") }}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div class="flex gap-4 items-center">
+                  <Input
+                    v-model="max_stack_size"
+                    :placeholder="t('max_stack_size')"
+                    class="flex-1 font-mono"
+                    type="number"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>{{ t("max_heap_size") }}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div class="flex gap-4 items-center">
+                  <Input
+                    v-model="max_heap_size"
+                    :placeholder="t('max_heap_size')"
                     class="flex-1 font-mono"
                     type="number"
                   />

@@ -35,7 +35,6 @@
     "fflate": "^0.8.2",
     "lucide-vue-next": "^0.563.0",
     "markdown-it": "^14.1.1",
-    "marked": "^18.0.0",
     "modern-screenshot": "^4.6.8",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",

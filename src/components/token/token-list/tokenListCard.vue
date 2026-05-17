@@ -51,6 +51,9 @@ const resetTokenOpen = ref(false);
 const resetTokenLoading = ref(false);
 // 控制是否显示重置Token结果
 const showResetTokenResult = ref(false);
+const isFirstLoad = ref(true);
+
+const emit = defineEmits<{ "first-load-empty": [] }>();
 
 const normalizeSearchText = (value: string | null | undefined) =>
   String(value ?? "")
@@ -88,16 +91,6 @@ watch(debouncedSearchKeyword, () => {
 });
 
 onMounted(() => {
-  //   fetchLoading.value = true;
-  //   useTokenList
-  //     .getTokenList()
-  //     .then((res) => {
-  //       tokensList.value = res;
-  //       page.value = 1;
-  //     })
-  //     .finally(() => {
-  //       fetchLoading.value = false;
-  //     });
   handleGetTokenList();
 });
 
@@ -107,6 +100,12 @@ const handleGetTokenList = () => {
   useTokenList
     .getTokenList()
     .then((res) => {
+      if (res.length === 0 && isFirstLoad.value) {
+        isFirstLoad.value = false;
+        emit("first-load-empty");
+        return;
+      }
+      isFirstLoad.value = false;
       tokensList.value = res;
       page.value = 1;
     })
@@ -114,6 +113,8 @@ const handleGetTokenList = () => {
       fetchLoading.value = false;
     });
 };
+
+defineExpose({ refresh: handleGetTokenList });
 
 const handleResetFilters = () => {
   searchKeyword.value = "";

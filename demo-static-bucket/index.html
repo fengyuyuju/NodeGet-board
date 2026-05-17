@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NodeGet 静态资源示例</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="badge">Static Bucket</div>
+        <h1>NodeGet 静态资源示例</h1>
+        <p class="subtitle">这个页面由 NodeGet 静态桶提供服务</p>
+      </header>
+
+      <section class="card">
+        <h2>服务信息</h2>
+        <div class="row">
+          <span class="label">请求 URL</span>
+          <span id="req-url" class="value mono">—</span>
+        </div>
+        <div class="row">
+          <span class="label">页面加载时间</span>
+          <span id="load-time" class="value mono">—</span>
+        </div>
+        <div class="row">
+          <span class="label">User-Agent</span>
+          <span id="user-agent" class="value mono truncate">—</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>静态资源列表</h2>
+        <ul class="file-list">
+          <li>
+            <span class="file-icon">📄</span>
+            <span class="file-name">index.html</span>
+            <span class="file-desc">入口页面</span>
+          </li>
+          <li>
+            <span class="file-icon">🎨</span>
+            <span class="file-name">assets/style.css</span>
+            <span class="file-desc">样式表</span>
+          </li>
+          <li>
+            <span class="file-icon">⚙️</span>
+            <span class="file-name">assets/index.js</span>
+            <span class="file-desc">交互逻辑</span>
+          </li>
+          <li>
+            <span class="file-icon">🎬</span>
+            <span class="file-name">assets/loading.mp4</span>
+            <span class="file-desc">示例视频</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="card">
+        <h2>媒体资源引用示例</h2>
+        <video
+          src="assets/loading.mp4"
+          class="demo-video"
+          autoplay
+          loop
+          muted
+          playsinline
+        ></video>
+        <p class="hint">
+          视频文件 <code>assets/loading.mp4</code> 由静态桶直接提供，
+          使用相对路径引用即可，无需额外配置。
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>子路径导航</h2>
+        <div class="link-grid">
+          <a href="/about.html" class="link-card">
+            <span class="link-title">关于页面</span>
+            <span class="link-url">/about.html</span>
+          </a>
+        </div>
+        <p class="hint">
+          将此目录上传到 NodeGet 静态桶并开启 <code>root 路由</code>， 所有 GET
+          请求将由该桶提供服务。
+        </p>
+      </section>
+
+      <footer>
+        <span>由 <strong>NodeGet</strong> 静态桶驱动</span>
+        <span id="current-time">—</span>
+      </footer>
+    </div>
+    <script src="assets/index.js"></script>
+  </body>
+</html>

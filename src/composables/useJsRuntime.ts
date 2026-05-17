@@ -117,6 +117,10 @@ export function useJsRuntime(backend = useBackendStore().currentBackend) {
       env: res.env || {},
       runtime_clean_time: res.runtime_clean_time,
       description: res.description || "",
+
+      max_run_time: (res.max_run_time as number) || 30000,
+      max_stack_size: (res.max_stack_size as number) || 1024 ** 2,
+      max_heap_size: (res.max_heap_size as number) || 8 * 1024 ** 2,
     };
   };
 

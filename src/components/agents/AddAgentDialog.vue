@@ -82,6 +82,29 @@ const dynamicRetention = ref<number>(60 * 6);
 const dynamicSummaryRetention = ref<number>(60 * 24 * 30);
 const agentTaskRetention = ref<number>(60 * 6);
 
+const CRON_SELECTION_STORAGE_KEY = "addAgent_selectedCronIds";
+
+const saveCronSelection = () => {
+  try {
+    const ids = Array.from(selectedCronIds.value);
+    localStorage.setItem(CRON_SELECTION_STORAGE_KEY, JSON.stringify(ids));
+  } catch (e) {
+    console.error("Failed to save cron selection:", e);
+  }
+};
+
+const loadCronSelection = () => {
+  try {
+    const saved = localStorage.getItem(CRON_SELECTION_STORAGE_KEY);
+    if (saved) {
+      const ids = JSON.parse(saved) as number[];
+      selectedCronIds.value = new Set(ids);
+    }
+  } catch (e) {
+    console.error("Failed to load cron selection:", e);
+  }
+};
+
 async function getDbLimit() {
   const namespace = "global";
   kv.namespace.value = namespace;
@@ -115,8 +138,27 @@ const loadCrons = async () => {
     );
     cv.sort((a, b) => (a.name > b.name ? -1 : 1));
     cronList.value = cv;
+    // 加载上次保存的选择
+    loadCronSelection();
   } catch {
     cronList.value = [];
+  }
+};
+
+const isAllCronsSelected = () => {
+  return (
+    cronList.value.length > 0 &&
+    selectedCronIds.value.size === cronList.value.length
+  );
+};
+
+const toggleSelectAllCrons = () => {
+  if (isAllCronsSelected()) {
+    selectedCronIds.value.clear();
+  } else {
+    cronList.value.forEach((cron) => {
+      selectedCronIds.value.add(cron.id);
+    });
   }
 };
 
@@ -262,6 +304,14 @@ const handleAdjustNode = () => {
   }
 };
 
+// 监听 selectedCronIds 变化，自动保存到 localStorage
+watch(
+  () => selectedCronIds.value.size,
+  () => {
+    saveCronSelection();
+  },
+);
+
 watch(open, (value) => {
   if (value) {
     generateUuid();
@@ -358,9 +408,23 @@ const steps = [
         <!-- Step 2: 预配置 -->
         <div v-if="step === 2" class="space-y-4 py-2">
           <div class="space-y-2">
-            <Label class="text-base">{{
-              t("dashboard.agents.cronSection")
-            }}</Label>
+            <div class="flex items-center justify-between">
+              <Label class="text-base">{{
+                t("dashboard.agents.cronSection")
+              }}</Label>
+              <Button
+                v-if="cronList.length > 0"
+                variant="ghost"
+                size="sm"
+                @click="toggleSelectAllCrons"
+              >
+                {{
+                  isAllCronsSelected()
+                    ? t("dashboard.cron.deselectAll")
+                    : t("dashboard.cron.selectAll")
+                }}
+              </Button>
+            </div>
             <div
               v-if="cronList.length === 0"
               class="text-sm text-muted-foreground py-2"
@@ -375,7 +439,7 @@ const steps = [
               >
                 <Checkbox
                   :id="`cron-${cron.id}`"
-                  :checked="selectedCronIds.has(cron.id)"
+                  :model-value="selectedCronIds.has(cron.id)"
                   @update:modelValue="
                     (v: unknown) => {
                       if (v) selectedCronIds.add(cron.id);

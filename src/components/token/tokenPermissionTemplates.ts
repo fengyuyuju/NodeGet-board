@@ -63,6 +63,13 @@ export const VISITOR_PERMISSIONS: PermissionEntry[] = [
   },
 ];
 
+export const VISITOR_WITH_PING_PERMISSIONS: PermissionEntry[] = [
+  ...VISITOR_PERMISSIONS,
+  { task: { write: "ping" } },
+  { task: { write: "tcp_ping" } },
+  { task: { write: "http_ping" } },
+];
+
 const normalizePermissionValue = (value: unknown): string => {
   if (Array.isArray(value)) {
     return `[${value.map((item) => normalizePermissionValue(item)).join(",")}]`;

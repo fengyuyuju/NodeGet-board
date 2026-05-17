@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>关于 - NodeGet 静态资源示例</title>
+    <link rel="stylesheet" href="assets/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="badge">Static Bucket</div>
+        <h1>关于</h1>
+        <p class="subtitle">NodeGet 静态桶说明</p>
+      </header>
+
+      <section class="card">
+        <h2>什么是静态桶？</h2>
+        <p class="body-text">
+          静态桶（Static Bucket）是 NodeGet 提供的静态文件托管功能。 你可以将
+          HTML、CSS、JavaScript、图片等任意静态文件上传到桶中， NodeGet 会通过
+          HTTP 提供服务。
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>使用方式</h2>
+        <ol class="steps">
+          <li>在「静态资源管理」中创建一个 Bucket</li>
+          <li>上传本地目录（支持 ZIP 包或文件夹选择）</li>
+          <li>开启 <code>root 路由</code> 后，该桶会响应所有根路径 GET 请求</li>
+          <li>通过 NodeGet 服务地址直接访问页面</li>
+        </ol>
+      </section>
+
+      <section class="card">
+        <h2>支持的功能</h2>
+        <ul class="feature-list">
+          <li>
+            <span class="check">✓</span> 任意静态文件（HTML / CSS / JS / 图片）
+          </li>
+          <li><span class="check">✓</span> 文件树浏览与在线编辑</li>
+          <li><span class="check">✓</span> ZIP 打包下载</li>
+          <li><span class="check">✓</span> 一键上传整个目录</li>
+          <li><span class="check">✓</span> root 路由（托管整站）</li>
+        </ul>
+      </section>
+
+      <div class="back-link">
+        <a href="/index.html">← 返回首页</a>
+      </div>
+    </div>
+  </body>
+</html>

@@ -20,6 +20,7 @@ import { useKv } from "@/composables/useKv";
 import { useBackendStore } from "@/composables/useBackendStore";
 import { makeRpcFunction } from "@/composables/useWsConnection";
 import { useLifecycle } from "@/composables/useLifecycle";
+import { useTask } from "@/composables/useTask";
 import { useI18n } from "vue-i18n";
 import {
   useAgentConfig,
@@ -36,6 +37,7 @@ const kv = useKv();
 const { currentBackend } = useBackendStore();
 const { getAgentConfigExtra, writeAgentConfig } = useAgentConfig();
 const { afterAgentDelete } = useLifecycle();
+const { createExecuteTask } = useTask();
 
 const nodeName = ref("");
 
@@ -93,27 +95,31 @@ async function handleDelete() {
   setStep(0, "running");
   try {
     const { currentUpstream } = await getAgentConfigExtra(props.uuid);
+
+    try {
+      const blockExec = false;
+      await createExecuteTask(
+        props.uuid,
+        "bash",
+        ["-c", "bash <(curl -sL https://install.nodeget.com) uninstall-agent"],
+        blockExec,
+      );
+    } catch {}
+
     // disable token, stop data report
     await rpc("token_delete", {
       token: currentBackend.value?.token,
       target_token: currentUpstream.token.split(":")[0],
     });
+  } catch {}
 
-    // todo: delete server block
-  } catch {
-    // API may not be implemented yet, continue
-  }
   try {
     // disable token, stop data report
     await rpc("token_delete", {
       token: currentBackend.value?.token,
       target_token: `[agent]:${props.uuid}`,
     });
-
-    // todo: delete server block
-  } catch {
-    // API may not be implemented yet, continue
-  }
+  } catch {}
   setStep(0, "done");
 
   // Step 2: clean cron
@@ -125,19 +131,19 @@ async function handleDelete() {
   }
   setStep(1, "done");
 
-  // Step 3: clean KV namespace
+  // Step 3: clean monitor/report data
   setStep(2, "running");
   try {
-    await afterAgentDelete(props.uuid, "kv");
+    await afterAgentDelete(props.uuid, "data");
   } catch {
     // ignore
   }
   setStep(2, "done");
 
-  // Step 4: clean monitor/report data
+  // Step 4: clean KV namespace
   setStep(3, "running");
   try {
-    await afterAgentDelete(props.uuid, "data");
+    await afterAgentDelete(props.uuid, "kv");
     await new Promise((r) => setTimeout(r, 300));
   } catch (error) {}
   setStep(3, "done");

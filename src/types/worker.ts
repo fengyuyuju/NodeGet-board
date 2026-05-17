@@ -8,6 +8,9 @@ export interface JsWorker {
   env?: Record<string, string>;
   runtime_clean_time?: number | null;
   description?: string;
+  max_run_time: number;
+  max_stack_size: number;
+  max_heap_size: number;
 }
 
 export interface JsWorkerOptions {

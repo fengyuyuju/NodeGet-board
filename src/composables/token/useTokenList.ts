@@ -40,7 +40,7 @@ export const useTokenListHook = () => {
         "token_list_all_tokens",
         { token },
       );
-      if (Array.isArray(result?.tokens) && result.tokens.length > 0) {
+      if (Array.isArray(result?.tokens)) {
         return result.tokens;
       }
       toast.error(t("dashboard.token.api.listFailed"));

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 defineProps<{ result: any[]; nodes: any[] }>();
 
-const expandedAll = ref(false);
+const expandedAll = ref(true);
 
 const toggleExpandAll = () => {
   expandedAll.value = !expandedAll.value;

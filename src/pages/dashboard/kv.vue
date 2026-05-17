@@ -18,7 +18,7 @@ definePage({
   meta: {
     title: "router.kv",
     icon: Database,
-    order: 9,
+    order: 12,
     group: "router.group.advanced",
   },
 });

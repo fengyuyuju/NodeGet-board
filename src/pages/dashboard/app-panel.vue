@@ -6,7 +6,7 @@ definePage({
   meta: {
     title: "router.appPanel",
     icon: Box,
-    order: 11,
+    order: 9,
     group: "router.group.appExtensions",
   },
 });

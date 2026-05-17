@@ -37,6 +37,8 @@ export const VISITOR_TEMPLATE_PERMISSIONS: PermissionEntry[] = [
   { static_monitoring: { read: "gpu" } },
   { dynamic_monitoring_summary: "read" },
   { node_get: "list_all_agent_uuid" },
+  { task: { read: "ping" } },
+  { task: { read: "tcp_ping" } },
   { kv: { read: "metadata_*" } },
 ];
 
