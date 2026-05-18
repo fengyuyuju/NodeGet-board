@@ -20,7 +20,22 @@ export type RpcDebugWebSocketEvent =
 type NativeWebSocketCtor = typeof WebSocket;
 type RpcDebugWebSocketListener = (event: RpcDebugWebSocketEvent) => void;
 
+interface RpcDebugTrackedWebSocketConnection {
+  connectionId: number;
+  url: string;
+  state: "connecting" | "open" | "error" | "closed";
+  createdAt: number;
+  openedAt?: number;
+  closedAt?: number;
+  closeCode?: number;
+  closeReason?: string;
+}
+
 const listeners = new Set<RpcDebugWebSocketListener>();
+const trackedConnections = new Map<
+  number,
+  RpcDebugTrackedWebSocketConnection
+>();
 
 let nativeWebSocket: NativeWebSocketCtor | null = null;
 let installed = false;
@@ -34,9 +49,56 @@ export function addRpcDebugWebSocketListener(
   listener: RpcDebugWebSocketListener,
 ) {
   listeners.add(listener);
+  replayTrackedConnections(listener);
   return () => {
     listeners.delete(listener);
   };
+}
+
+function replayTrackedConnections(listener: RpcDebugWebSocketListener) {
+  for (const connection of trackedConnections.values()) {
+    listener({
+      type: "connection",
+      state: "connecting",
+      connectionId: connection.connectionId,
+      url: connection.url,
+      timestamp: connection.createdAt,
+    });
+
+    if (connection.state === "open") {
+      listener({
+        type: "connection",
+        state: "open",
+        connectionId: connection.connectionId,
+        url: connection.url,
+        timestamp: connection.openedAt ?? connection.createdAt,
+      });
+      continue;
+    }
+
+    if (connection.state === "error") {
+      listener({
+        type: "connection",
+        state: "error",
+        connectionId: connection.connectionId,
+        url: connection.url,
+        timestamp: Date.now(),
+      });
+      continue;
+    }
+
+    if (connection.state === "closed") {
+      listener({
+        type: "connection",
+        state: "closed",
+        connectionId: connection.connectionId,
+        url: connection.url,
+        timestamp: connection.closedAt ?? connection.createdAt,
+        closeCode: connection.closeCode,
+        closeReason: connection.closeReason,
+      });
+    }
+  }
 }
 
 export function installRpcDebugWebSocketPatch() {
@@ -53,22 +115,36 @@ export function installRpcDebugWebSocketPatch() {
       super(url, protocols as string | string[] | undefined);
       this.__rpcDebugConnectionId = nextConnectionId++;
       this.__rpcDebugUrl = String(url);
+      const timestamp = Date.now();
+
+      trackedConnections.set(this.__rpcDebugConnectionId, {
+        connectionId: this.__rpcDebugConnectionId,
+        url: this.__rpcDebugUrl,
+        state: "connecting",
+        createdAt: timestamp,
+      });
 
       emit({
         type: "connection",
         state: "connecting",
         connectionId: this.__rpcDebugConnectionId,
         url: this.__rpcDebugUrl,
-        timestamp: Date.now(),
+        timestamp,
       });
 
       this.addEventListener("open", () => {
+        const openedAt = Date.now();
+        const connection = trackedConnections.get(this.__rpcDebugConnectionId);
+        if (connection) {
+          connection.state = "open";
+          connection.openedAt = openedAt;
+        }
         emit({
           type: "connection",
           state: "open",
           connectionId: this.__rpcDebugConnectionId,
           url: this.__rpcDebugUrl,
-          timestamp: Date.now(),
+          timestamp: openedAt,
         });
       });
 
@@ -84,6 +160,8 @@ export function installRpcDebugWebSocketPatch() {
       });
 
       this.addEventListener("error", () => {
+        const connection = trackedConnections.get(this.__rpcDebugConnectionId);
+        if (connection) connection.state = "error";
         emit({
           type: "connection",
           state: "error",
@@ -94,12 +172,20 @@ export function installRpcDebugWebSocketPatch() {
       });
 
       this.addEventListener("close", (event) => {
+        const closedAt = Date.now();
+        const connection = trackedConnections.get(this.__rpcDebugConnectionId);
+        if (connection) {
+          connection.state = "closed";
+          connection.closedAt = closedAt;
+          connection.closeCode = event.code;
+          connection.closeReason = event.reason;
+        }
         emit({
           type: "connection",
           state: "closed",
           connectionId: this.__rpcDebugConnectionId,
           url: this.__rpcDebugUrl,
-          timestamp: Date.now(),
+          timestamp: closedAt,
           closeCode: event.code,
           closeReason: event.reason,
         });

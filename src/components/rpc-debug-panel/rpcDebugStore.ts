@@ -332,9 +332,19 @@ function handleIncomingFrame(connectionId: number, url: string, data: unknown) {
 
 function markConnectionState(
   connectionId: number,
+  url: string,
   patch: Partial<RpcDebugConnection>,
 ) {
-  const connection = connections.get(connectionId);
+  let connection = connections.get(connectionId);
+  if (!connection) {
+    connection = {
+      connectionId,
+      url,
+      state: "connecting",
+      createdAt: patch.createdAt ?? now(),
+    };
+    connections.set(connectionId, connection);
+  }
   if (connection) Object.assign(connection, patch);
 }
 
@@ -351,7 +361,7 @@ function handlePatchEvent(event: RpcDebugWebSocketEvent) {
     }
 
     if (event.state === "open") {
-      markConnectionState(event.connectionId, {
+      markConnectionState(event.connectionId, event.url, {
         state: "open",
         openedAt: event.timestamp,
       });
@@ -359,11 +369,11 @@ function handlePatchEvent(event: RpcDebugWebSocketEvent) {
     }
 
     if (event.state === "error") {
-      markConnectionState(event.connectionId, { state: "error" });
+      markConnectionState(event.connectionId, event.url, { state: "error" });
       return;
     }
 
-    markConnectionState(event.connectionId, {
+    markConnectionState(event.connectionId, event.url, {
       state: "closed",
       closedAt: event.timestamp,
       closeCode: event.closeCode,
@@ -371,6 +381,10 @@ function handlePatchEvent(event: RpcDebugWebSocketEvent) {
     });
     return;
   }
+
+  markConnectionState(event.connectionId, event.url, {
+    state: "open",
+  });
 
   if (event.direction === "outgoing") {
     handleOutgoingFrame(event.connectionId, event.url, event.data);
