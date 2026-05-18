@@ -75,9 +75,14 @@ const isLoading = ref(false);
 const protocolList = location.protocol === "https:" ? ["wss"] : ["wss", "ws"];
 
 const newUrl = computed(() => {
-  const host = parseHost(newHost.value);
-  if (!host) return "";
-  return `${newProtocol.value}//${host}${newPathname.value}`;
+  if (!newHost.value) return "";
+  try {
+    const host = parseHost(newHost.value);
+    if (!host) return "";
+    return `${newProtocol.value}//${host}${newPathname.value}`;
+  } catch {
+    return "";
+  }
 });
 
 /**
