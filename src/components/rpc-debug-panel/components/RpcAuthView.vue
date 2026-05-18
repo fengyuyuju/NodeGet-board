@@ -101,7 +101,7 @@ const permissionColumns = computed<ColumnDef<PermissionRule>[]>(() => [
 </script>
 
 <template>
-  <div class="min-h-[620px] p-6">
+  <div class="h-full p-6">
     <div
       class="mb-6 flex items-center justify-between rounded-lg border bg-muted/25 px-5 py-4"
     >

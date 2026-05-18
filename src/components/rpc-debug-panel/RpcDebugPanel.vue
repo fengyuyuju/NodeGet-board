@@ -60,48 +60,51 @@ function handleComposerSourceOpen(recordId: string) {
 </script>
 
 <template>
-  <section>
-    <div class="overflow-hidden rounded-lg border bg-background shadow-sm">
-      <header class="flex h-16 items-center gap-3 border-b px-6">
-        <div class="text-base font-semibold">NodeGet RPC 调试</div>
-        <span
-          class="inline-flex h-7 items-center rounded-md px-3 text-xs font-medium ring-1"
-          :class="
-            debugStore.activeConnectionCount.value > 0
-              ? 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
-              : 'bg-muted text-muted-foreground ring-border'
-          "
-        >
-          WS
-          {{ debugStore.activeConnectionCount.value > 0 ? "已连接" : "待连接" }}
-        </span>
-        <span
-          class="inline-flex h-7 items-center rounded-md bg-muted px-3 text-xs ring-1 ring-border"
-        >
-          {{ latencyLabel }}
-        </span>
-        <span class="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-          {{ connectionLabel }}
-        </span>
-      </header>
+  <section
+    class="flex flex-col h-full overflow-hidden rounded-lg border max-h-full bg-background shadow-sm"
+  >
+    <header class="flex-none flex h-16 items-center gap-3 border-b px-6">
+      <div class="text-base font-semibold">NodeGet RPC 调试</div>
+      <span
+        class="inline-flex h-7 items-center rounded-md px-3 text-xs font-medium ring-1"
+        :class="
+          debugStore.activeConnectionCount.value > 0
+            ? 'bg-emerald-50 text-emerald-700 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300'
+            : 'bg-muted text-muted-foreground ring-border'
+        "
+      >
+        WS
+        {{ debugStore.activeConnectionCount.value > 0 ? "已连接" : "待连接" }}
+      </span>
+      <span
+        class="inline-flex h-7 items-center rounded-md bg-muted px-3 text-xs ring-1 ring-border"
+      >
+        {{ latencyLabel }}
+      </span>
+      <span class="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+        {{ connectionLabel }}
+      </span>
+    </header>
 
-      <nav class="flex h-13 items-center gap-2 border-b px-6">
-        <button
-          v-for="tab in rpcDebugTabs"
-          :key="tab.key"
-          type="button"
-          class="h-9 rounded-md px-4 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
-          :class="
-            activeTab === tab.key
-              ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
-              : ''
-          "
-          @click="activeTab = tab.key"
-        >
-          {{ tab.label }}
-        </button>
-      </nav>
+    <nav class="flex-none flex h-13 items-center gap-2 border-b px-6">
+      <button
+        v-for="tab in rpcDebugTabs"
+        :key="tab.key"
+        type="button"
+        class="h-9 rounded-md px-4 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+        :class="
+          activeTab === tab.key
+            ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground'
+            : ''
+        "
+        @click="activeTab = tab.key"
+      >
+        {{ tab.label }}
+      </button>
+    </nav>
 
+    <!-- tab content -->
+    <div class="flex-auto inset-0 overflow-hidden">
       <RpcNetworkView
         v-if="activeTab === 'network'"
         @copy="copyText"

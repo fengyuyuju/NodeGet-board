@@ -122,8 +122,8 @@ function relayCopy(text: string, message?: string) {
 </script>
 
 <template>
-  <div class="relative min-h-[620px] p-6">
-    <div class="mb-4 flex flex-wrap items-center gap-2">
+  <div class="relative flex flex-col h-full overflow-hidden p-6">
+    <div class="mb-4 flex flex-wrap flex-none items-center gap-2">
       <button
         class="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
         type="button"
@@ -151,7 +151,7 @@ function relayCopy(text: string, message?: string) {
       </button>
     </div>
 
-    <div class="mb-4 flex flex-wrap items-end gap-3">
+    <div class="mb-4 flex flex-wrap flex-none items-end gap-3">
       <label class="grid gap-1.5">
         <span class="text-xs font-medium text-muted-foreground"
           >筛选方法 / ID / 关键词</span
@@ -190,6 +190,7 @@ function relayCopy(text: string, message?: string) {
     </div>
 
     <RpcDebugDataTable
+      class="flex overflow-hidden"
       :columns="networkColumns"
       :data="filteredRecords"
       empty-text="暂无捕获记录。打开本页后新建的 WebSocket 请求会自动进入列表。"
@@ -201,6 +202,7 @@ function relayCopy(text: string, message?: string) {
       :on-row-click="selectRecord"
     />
     <RpcNetworkDrawer
+      class="z-10"
       v-if="selectedRecord"
       :record="selectedRecord"
       @close="closeDrawer"

@@ -209,7 +209,7 @@ async function sendComposerRequest() {
 </script>
 
 <template>
-  <div class="grid min-h-[620px] gap-6 p-6 lg:grid-cols-[520px_minmax(0,1fr)]">
+  <div class="grid h-full gap-6 p-6 lg:grid-cols-[520px_minmax(0,1fr)]">
     <section class="rounded-lg border p-5">
       <div
         v-if="composerSource"

@@ -84,7 +84,7 @@ const logColumns = computed<ColumnDef<LogEntry>[]>(() => [
 </script>
 
 <template>
-  <div class="min-h-[620px] p-6">
+  <div class="h-full p-6">
     <section class="mb-6 rounded-lg border p-5">
       <div class="grid gap-4 lg:grid-cols-[260px_360px_1fr]">
         <label class="grid gap-1.5">

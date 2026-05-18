@@ -4,9 +4,11 @@ import { Copy, X } from "lucide-vue-next";
 import type { RpcDebugRecord } from "../rpcDebugStore";
 import { formatDebugPayload } from "../rpcDebugStore";
 import { statusClass, statusText } from "../helpers";
+import { cn } from "@/lib/utils";
 
 const props = defineProps<{
   record: RpcDebugRecord;
+  class?: string;
 }>();
 
 const emit = defineEmits<{
@@ -26,7 +28,12 @@ const responseText = computed(() =>
 
 <template>
   <aside
-    class="absolute bottom-0 right-0 top-0 flex w-[380px] flex-col border-l bg-background shadow-xl"
+    :class="
+      cn(
+        'absolute bottom-0 right-0 top-0 flex w-95 flex-col border-l bg-background shadow-xl',
+        props.class,
+      )
+    "
   >
     <div class="border-b px-5 py-4">
       <div class="flex items-center justify-between gap-3">
@@ -85,8 +92,7 @@ const responseText = computed(() =>
             )
           "
         >
-          <Copy class="size-4" />
-          复制完整
+          <Copy class="size-4" />完整复制
         </button>
       </div>
 

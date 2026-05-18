@@ -19,12 +19,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 const props = withDefaults(
   defineProps<{
     columns: ColumnDef<TData, any>[];
     data: TData[];
     emptyText?: string;
+    class?: string;
     rowClass?: (row: TData) => string;
     rowKey?: (row: TData, index: number) => string;
     onRowClick?: (row: TData) => void;
@@ -55,9 +57,9 @@ function metaClass(meta: unknown, key: "headerClass" | "cellClass") {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-md border">
+  <div :class="cn('rounded-md border', props.class)">
     <Table>
-      <TableHeader class="bg-muted/60">
+      <TableHeader class="sticky top-0 z-10 bg-muted/60">
         <TableRow
           v-for="headerGroup in table.getHeaderGroups()"
           :key="headerGroup.id"
@@ -66,7 +68,7 @@ function metaClass(meta: unknown, key: "headerClass" | "cellClass") {
             v-for="header in headerGroup.headers"
             :key="header.id"
             :class="[
-              'h-9 px-3 text-xs font-medium text-muted-foreground',
+              'h-9 bg-muted/60 px-3 text-xs font-medium text-muted-foreground',
               metaClass(header.column.columnDef.meta, 'headerClass'),
             ]"
             :style="{ width: `${header.getSize()}px` }"

@@ -14,7 +14,7 @@ function exportRecords() {
 </script>
 
 <template>
-  <div class="min-h-[620px] p-6">
+  <div class="h-full p-6">
     <section class="rounded-lg border p-5">
       <div class="divide-y">
         <label class="flex min-h-16 items-center justify-between gap-6 py-4">
