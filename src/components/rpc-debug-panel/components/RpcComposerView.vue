@@ -5,7 +5,6 @@ import { toast } from "vue-sonner";
 import { useBackendStore } from "@/composables/useBackendStore";
 import { getWsConnection } from "@/composables/useWsConnection";
 import {
-  formatDebugPayload,
   maskToken,
   type RpcDebugRecord,
   useRpcDebugStore,
@@ -92,7 +91,7 @@ watch(
     composer.method =
       typeof req?.method === "string" ? req.method : record.method;
     composer.requestId = "";
-    composer.paramsText = formatDebugPayload(req?.params ?? {});
+    composer.paramsText = formatRawComposerPayload(req?.params ?? {});
     composer.responseText = "尚未发送请求";
     composer.responseMeta = "等待发送";
     composerSource.value = {
@@ -135,6 +134,11 @@ function clearComposerDraft() {
 function showSourceRecord() {
   if (!composerSource.value) return;
   emit("showSourceRecord", composerSource.value.recordId);
+}
+
+function formatRawComposerPayload(value: unknown) {
+  if (typeof value === "string") return JSON.stringify(value);
+  return JSON.stringify(value, null, debugStore.settings.formatJson ? 2 : 0);
 }
 
 function fillDefaultParams() {
