@@ -18,6 +18,7 @@ import { useLifecycle } from "@/composables/useLifecycle";
 import { delay } from "@/lib/delay";
 import { useBackendExtra } from "@/composables/useBackendExtra";
 import { useRouter } from "vue-router";
+import mockInput from "@/components/misc/mockInput.vue";
 import {
   Select,
   SelectTrigger,
@@ -334,6 +335,13 @@ watch(
               type="password"
               placeholder="key:secret username|password"
             />
+            <!-- todo: xss check, not enabled now -->
+            <!-- <mockInput
+              id="token"
+              v-model="newToken"
+              type="password"
+              placeholder="key:secret username|password"
+            /> -->
           </div>
           <RainbowButton
             v-if="(newName && newUrl && newToken) || isLoading"
