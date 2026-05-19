@@ -383,7 +383,7 @@ fetchVersion();
                   size="icon"
                   variant="ghost"
                   class="h-8 w-8"
-                  title="Upgrade"
+                  title="升级"
                   @click="openChooseVersion(backend.url)"
                 >
                   <CloudDownload class="h-4 w-4" />
@@ -392,7 +392,7 @@ fetchVersion();
                   size="icon"
                   variant="ghost"
                   class="h-8 w-8"
-                  title="manage"
+                  title="分享"
                   @click="
                     shareBackend = backend;
                     shareOpen = true;

@@ -42,3 +42,25 @@ export async function preGenerateToken(
     console.error("Token pre-generation failed:", e);
   }
 }
+
+export async function reGenerateToken(
+  nodeUuid: string,
+  backend = currentBackend,
+) {
+  if (!backend.value) return;
+  try {
+    try {
+      await getWsConnection(backend.value.url).call<{
+        key?: string;
+        secret?: string;
+      }>("token_delete", {
+        token: backend.value.token,
+        target_token: `[agent]:${nodeUuid}`,
+      });
+    } catch {}
+
+    return preGenerateToken(nodeUuid, backend);
+  } catch (e) {
+    console.error("Token re-generation failed:", e);
+  }
+}

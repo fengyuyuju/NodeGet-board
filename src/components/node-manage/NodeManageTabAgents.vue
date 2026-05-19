@@ -16,6 +16,8 @@ import {
   CloudDownload,
   Info,
   Router,
+  LifeBuoy,
+  LifeBuoyIcon,
 } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,8 +52,10 @@ import codeCopy from "@/components/node-manage/codeCopy.vue";
 import { useBackendStore } from "@/composables/useBackendStore";
 import { getWsConnection } from "@/composables/useWsConnection";
 import AddAgentDialog from "@/components/agents/AddAgentDialog.vue";
+import ShowAgentCommandDialog from "@/components/agents/ShowAgentCommandDialog.vue";
 import { useAgentInfo } from "@/composables/useAgentInfo";
 import VersionDialog from "@/components/node-manage/VersionDialog.vue";
+import { PopConfirm } from "@/components/ui/pop-confirm";
 
 import { compareVersions } from "compare-versions";
 import { useTask } from "@/composables/useTask";
@@ -72,6 +76,8 @@ const { agents, loading, fetchAgents, fetchAgentVersion } = currentAgentInfo;
 const searchQuery = ref("");
 const selectedUuids = ref<Set<string>>(new Set());
 const addAgentOpen = ref(false);
+const showAgentCommandOpen = ref(false);
+const showCommandAgentUuid = ref("");
 const sortable = ref(false);
 
 const changeVersionOpen = ref(false);
@@ -558,6 +564,25 @@ refresh();
               >
                 <CloudDownload class="h-4 w-4" />
               </Button>
+              <PopConfirm
+                title="重新连接agent？(危险操作)"
+                description="会关闭已授权此agent的token，并生成新的连接命令和token，已连接的agent（如果存在）会被强制断开连接，直至使用新的连接命令重新连接，适用于重装系统后恢复连接"
+                confirm-text="确定"
+                :cancel-text="t('dashboard.servers.deleteCancel')"
+                @confirm="
+                  showCommandAgentUuid = agent.uuid;
+                  showAgentCommandOpen = true;
+                "
+              >
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  class="h-8 w-8"
+                  title="重新显示连接命令"
+                >
+                  <LifeBuoyIcon class="h-4 w-4" />
+                </Button>
+              </PopConfirm>
               <Button
                 size="icon"
                 variant="ghost"
@@ -575,6 +600,12 @@ refresh();
     <AddAgentDialog
       v-if="addAgentOpen"
       v-model:open="addAgentOpen"
+      @added="refresh()"
+    />
+    <ShowAgentCommandDialog
+      v-if="showAgentCommandOpen"
+      v-model:open="showAgentCommandOpen"
+      :uuid="showCommandAgentUuid"
       @added="refresh()"
     />
     <VersionDialog
