@@ -5,6 +5,7 @@ import {
 } from "./scopeCodec.ts";
 import type { PermissionEntry, Token, TokenLimitEntry } from "./type.ts";
 import { generatePassword } from "../../lib/password.ts";
+import { TASK_NAME_LIST } from "@/types/task.ts";
 
 export type TokenTemplate = {
   id: string;
@@ -18,17 +19,9 @@ export const AGENT_TEMPLATE_PERMISSIONS: PermissionEntry[] = [
   { dynamic_monitoring: "write" },
   { dynamic_monitoring_summary: "write" },
   { task: "listen" },
-  { task: { write: "ping" } },
-  { task: { write: "tcp_ping" } },
-  { task: { write: "http_ping" } },
-  { task: { write: "web_shell" } },
-  { task: { write: "execute" } },
-  { task: { write: "edit_config" } },
-  { task: { write: "read_config" } },
-  { task: { write: "http_request" } },
-  { task: { write: "self_update" } },
-  { task: { write: "ip" } },
-  { task: { write: "version" } },
+  ...TASK_NAME_LIST.map((t) => ({
+    task: { write: t },
+  })),
 ];
 
 export const VISITOR_TEMPLATE_PERMISSIONS: PermissionEntry[] = [

@@ -357,6 +357,17 @@ async function handleSave() {
               />
             </div>
             <div class="flex items-center justify-between">
+              <span class="text-sm"> DNS </span>
+              <Switch
+                :modelValue="allowTaskType.has('dns')"
+                @update:model-value="
+                  (v) =>
+                    v ? allowTaskType.add('dns') : allowTaskType.delete('dns')
+                "
+                :disabled="!allowTaskType.has('edit_config')"
+              />
+            </div>
+            <div class="flex items-center justify-between">
               <span class="text-sm">{{
                 $t("dashboard.node.config.featureHttpRequest")
               }}</span>

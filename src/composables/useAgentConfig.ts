@@ -92,23 +92,27 @@ function parseToml(tomlStr: string): AgentConfig {
   try {
     const config = TOML.parse(tomlStr) as AgentConfig;
 
-    // 对于 server 数组中的 allow_* 属性，设置默认值为 true
     if (config.server && Array.isArray(config.server)) {
-      config.server = config.server.map((server) => ({
-        allow_task: true,
-        allow_icmp_ping: false,
-        allow_tcp_ping: false,
-        allow_http_ping: false,
-        allow_web_shell: false,
-        allow_edit_config: false,
-        allow_read_config: false,
-        allow_execute: false,
-        allow_http_request: false,
-        allow_self_update: false,
-        allow_ip: false,
-        allow_version: false,
-        ...server, // 用原始值覆盖默认值
-      }));
+      config.server = config.server.map((server) => {
+        if (server.allow_task_type) {
+          return server;
+        }
+        return {
+          allow_task: true,
+          allow_icmp_ping: false,
+          allow_tcp_ping: false,
+          allow_http_ping: false,
+          allow_web_shell: false,
+          allow_edit_config: false,
+          allow_read_config: false,
+          allow_execute: false,
+          allow_http_request: false,
+          allow_self_update: false,
+          allow_ip: false,
+          allow_version: false,
+          ...server, // 用原始值覆盖默认值
+        };
+      });
     }
 
     return config;

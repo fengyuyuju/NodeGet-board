@@ -1,6 +1,7 @@
 import type { ScopeTabValue } from "./scopeUi";
 import type { PermissionEntry, TokenLimitEntry, TokenLimitScope } from "./type";
 import { DEFAULT_SCOPE } from "./scopeCodec";
+import { TASK_NAME_LIST } from "@/types/task";
 
 export type TokenPermissionTemplateValue = "agent" | "visitor" | "custom";
 
@@ -28,17 +29,9 @@ export const AGENT_PERMISSIONS: PermissionEntry[] = [
   { dynamic_monitoring: "write" },
   { dynamic_monitoring_summary: "write" },
   { task: "listen" },
-  { task: { write: "ping" } },
-  { task: { write: "tcp_ping" } },
-  { task: { write: "http_ping" } },
-  { task: { write: "web_shell" } },
-  { task: { write: "execute" } },
-  { task: { write: "edit_config" } },
-  { task: { write: "read_config" } },
-  { task: { write: "http_request" } },
-  { task: { write: "self_update" } },
-  { task: { write: "ip" } },
-  { task: { write: "version" } },
+  ...TASK_NAME_LIST.map((t) => ({
+    task: { write: t },
+  })),
 ];
 
 export const VISITOR_PERMISSIONS: PermissionEntry[] = [

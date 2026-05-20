@@ -7,6 +7,7 @@ import {
   normalizeScopes,
 } from "./scopeCodec";
 import type { PermissionEntry, Token, TokenLimitEntry } from "./type";
+import { TASK_NAME_LIST } from "@/types/task";
 
 const STATIC_MONITORING_READ_FIELDS = new Set(["cpu", "system", "gpu"]);
 const DYNAMIC_MONITORING_FIELDS = new Set([
@@ -19,19 +20,7 @@ const DYNAMIC_MONITORING_FIELDS = new Set([
   "gpu",
 ]);
 const DYNAMIC_MONITORING_SUMMARY_TYPES = new Set(["read", "write", "delete"]);
-const TASK_TYPES = new Set([
-  "ping",
-  "tcp_ping",
-  "http_ping",
-  "web_shell",
-  "execute",
-  "ip",
-  "read_config",
-  "edit_config",
-  "version",
-  "http_request",
-  "self_update",
-]);
+const TASK_TYPES = new Set(TASK_NAME_LIST);
 const CRONTAB_TYPES = new Set(["read", "write", "delete"]);
 const NODE_GET_TYPES = new Set(["list_all_agent_uuid", "get_rt_pool"]);
 const JS_WORKER_TYPES = new Set([
