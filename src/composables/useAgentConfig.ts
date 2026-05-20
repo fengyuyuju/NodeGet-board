@@ -9,7 +9,7 @@ Handles functionalities related to agent configuration, such as
 import { ref, computed } from "vue";
 import { useBackendStore } from "@/composables/useBackendStore";
 import { useBackendExtra } from "@/composables/useBackendExtra";
-import { type TaskString, allTaskStrings } from "@/composables/useTask";
+import { type TASK_NAME, TASK_NAME_LIST } from "@/types/task";
 import { compareVersions } from "compare-versions";
 
 import {
@@ -40,7 +40,7 @@ export interface UpstreamServer {
   allow_self_update?: boolean;
   allow_ip?: boolean;
   allow_version?: boolean;
-  allow_task_type?: TaskString[];
+  allow_task_type?: TASK_NAME[];
 
   [key: string]: any;
 }
@@ -121,17 +121,17 @@ function parseToml(tomlStr: string): AgentConfig {
 
 function oldUpstream2New(upstream: UpstreamServer) {
   const upstream2: UpstreamServer = JSON.parse(JSON.stringify(upstream));
-  const allow_task_type: Array<TaskString> = [];
-  allTaskStrings.forEach((t) => {
+  const allow_task_type: Array<TASK_NAME> = [];
+  TASK_NAME_LIST.forEach((t) => {
     if (t === "ping") {
       if (upstream2["allow_icmp_ping"]) {
-        allow_task_type.push(t as TaskString);
+        allow_task_type.push(t as TASK_NAME);
         delete upstream2["allow_icmp_ping"];
       }
       return;
     }
     if (upstream2["allow_" + t]) {
-      allow_task_type.push(t as TaskString);
+      allow_task_type.push(t as TASK_NAME);
       delete upstream2["allow_" + t];
     }
   });
@@ -147,7 +147,7 @@ function newUpstream2Old(upstream: UpstreamServer) {
     throw "not new upstream";
   }
   const att = new Set(upstream2.allow_task_type);
-  allTaskStrings.forEach((t) => {
+  TASK_NAME_LIST.forEach((t) => {
     if (t === "ping") {
       upstream2["allow_icmp_ping"] = att.has(t);
       return;

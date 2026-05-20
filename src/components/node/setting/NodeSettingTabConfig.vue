@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { NumberField } from "@/components/ui/number-field";
 import { Switch } from "@/components/ui/switch";
 import { PopConfirm } from "@/components/ui/pop-confirm";
-import { type TaskString } from "@/composables/useTask";
+import { type TASK_NAME } from "@/types/task";
 import {
   useAgentConfig,
   type AgentConfig,
@@ -47,7 +47,7 @@ const execMaxCharacter = ref<number | undefined>(undefined);
 const connectTimeout = ref<number | undefined>(undefined);
 
 // 特性开关 (server config中的allow_*属性)
-const allowTaskType = ref(new Set<TaskString>());
+const allowTaskType = ref(new Set<TASK_NAME>());
 const allowIcmpPing = ref(false);
 const allowTcpPing = ref(false);
 const allowHttpPing = ref(false);

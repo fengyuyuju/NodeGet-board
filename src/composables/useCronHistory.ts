@@ -1,7 +1,7 @@
 import { computed } from "vue";
 import { useBackendStore } from "@/composables/useBackendStore";
 import { getWsConnection } from "@/composables/useWsConnection";
-import type { TaskEventType } from "@/types/taskEvent";
+import type { TASK_NAME } from "@/types/task";
 
 export interface CrontabResult {
   id: number;
@@ -33,7 +33,7 @@ export interface TaskQueryCondition {
   is_success?: boolean;
   is_failure?: boolean;
   is_running?: boolean;
-  type?: TaskEventType;
+  type?: TASK_NAME;
   cron_source?: string;
   limit?: number;
   last?: null;
