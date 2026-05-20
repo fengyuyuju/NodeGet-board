@@ -1,7 +1,25 @@
 <script setup lang="ts">
 import { computed, h, ref } from "vue";
 import type { ColumnDef } from "@tanstack/vue-table";
-import { Download, Pause, Play, Search, Trash2 } from "lucide-vue-next";
+import { useDebounceFn } from "@vueuse/core";
+import { Download, Pause, Play, Trash2 } from "lucide-vue-next";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { RpcDebugRecord } from "../rpcDebugStore";
 import { useRpcDebugStore } from "../rpcDebugStore";
 import {
@@ -21,23 +39,79 @@ const emit = defineEmits<{
 
 const debugStore = useRpcDebugStore();
 const networkFilter = ref("");
+const networkFilterDraft = ref("");
+const networkFilterSuggestionsOpen = ref(false);
 const statusFilter = ref("all");
 const kindFilter = ref("all");
 
 const selectedRecord = computed(() => debugStore.selectedRecord.value);
 
+const syncNetworkFilter = useDebounceFn(() => {
+  networkFilter.value = networkFilterDraft.value;
+}, 300);
+
+type NetworkFilterSuggestionType = "method" | "id" | "keyword";
+
+interface NetworkFilterSuggestion {
+  type: NetworkFilterSuggestionType;
+  value: string;
+  label: string;
+}
+
+const NETWORK_FILTER_SUGGESTION_LABELS: Record<
+  NetworkFilterSuggestionType,
+  string
+> = {
+  method: "方法",
+  id: "ID",
+  keyword: "关键词",
+};
+
+const networkFilterSuggestions = computed(() => {
+  const suggestions = new Map<string, NetworkFilterSuggestion>();
+
+  for (const record of debugStore.records.value) {
+    addNetworkFilterSuggestion(suggestions, "method", record.method);
+    addNetworkFilterSuggestion(suggestions, "id", record.id);
+    addNetworkFilterSuggestion(suggestions, "keyword", record.subscription);
+    addNetworkFilterSuggestion(suggestions, "keyword", record.note);
+    addNetworkFilterSuggestion(suggestions, "keyword", record.url);
+  }
+
+  return [...suggestions.values()];
+});
+
+const networkFilterSuggestionGroups = computed(() =>
+  (
+    Object.keys(
+      NETWORK_FILTER_SUGGESTION_LABELS,
+    ) as NetworkFilterSuggestionType[]
+  )
+    .map((type) => ({
+      type,
+      heading: NETWORK_FILTER_SUGGESTION_LABELS[type],
+      suggestions: networkFilterSuggestions.value.filter(
+        (suggestion) => suggestion.type === type,
+      ),
+    }))
+    .filter((group) => group.suggestions.length > 0),
+);
+
 const filteredRecords = computed(() => {
-  const q = networkFilter.value.trim().toLowerCase();
+  const q = networkFilter.value;
   return debugStore.records.value.filter((record) => {
+    const searchableValues = [
+      record.method,
+      record.id,
+      record.subscription,
+      record.note,
+      record.url,
+    ];
     const matchesText =
       !q ||
-      record.method.toLowerCase().includes(q) ||
-      String(record.id ?? "")
-        .toLowerCase()
-        .includes(q) ||
-      String(record.subscription ?? "")
-        .toLowerCase()
-        .includes(q);
+      searchableValues.some((value) =>
+        matchesNetworkFilterValue(String(value ?? ""), q),
+      );
     const matchesStatus =
       statusFilter.value === "all" || record.status === statusFilter.value;
     const matchesKind =
@@ -45,6 +119,112 @@ const filteredRecords = computed(() => {
     return matchesText && matchesStatus && matchesKind;
   });
 });
+
+function addNetworkFilterSuggestion(
+  suggestions: Map<string, NetworkFilterSuggestion>,
+  type: NetworkFilterSuggestionType,
+  value: unknown,
+) {
+  if (typeof value !== "string") {
+    return;
+  }
+
+  const text = value.trim();
+  if (!text) {
+    return;
+  }
+
+  const key = `${type}:${text.toLowerCase()}`;
+  if (suggestions.has(key)) {
+    return;
+  }
+
+  suggestions.set(key, {
+    type,
+    value: text,
+    label: NETWORK_FILTER_SUGGESTION_LABELS[type],
+  });
+}
+
+function applyNetworkFilterSuggestion(value: string) {
+  networkFilterDraft.value = value;
+  networkFilter.value = value;
+  networkFilterSuggestionsOpen.value = false;
+}
+
+function handleNetworkFilterInput(value: string) {
+  networkFilterDraft.value = value;
+  networkFilterSuggestionsOpen.value = true;
+  syncNetworkFilter();
+}
+
+function handleNetworkFilterFocusOut(event: FocusEvent) {
+  const currentTarget = event.currentTarget;
+  const relatedTarget = event.relatedTarget;
+
+  if (!(currentTarget instanceof HTMLElement)) {
+    return;
+  }
+
+  if (relatedTarget instanceof Node && currentTarget.contains(relatedTarget)) {
+    return;
+  }
+
+  networkFilterSuggestionsOpen.value = false;
+}
+
+function matchesNetworkFilterValue(value: string, search: string) {
+  const searchPattern = getNetworkFilterPattern(search);
+  if (!searchPattern.compact) {
+    return true;
+  }
+
+  const targetPattern = getNetworkFilterPattern(value);
+  if (!targetPattern.compact) {
+    return false;
+  }
+
+  if (targetPattern.compact.includes(searchPattern.compact)) {
+    return true;
+  }
+
+  if (isSubsequence(searchPattern.compact, targetPattern.compact)) {
+    return true;
+  }
+
+  return searchPattern.parts.every((part) =>
+    targetPattern.parts.some((targetPart) => targetPart.includes(part)),
+  );
+}
+
+function getNetworkFilterPattern(value: string) {
+  const parts = value
+    .normalize("NFKC")
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/gu)
+    .filter(Boolean);
+
+  return {
+    parts,
+    compact: parts.join(""),
+  };
+}
+
+function isSubsequence(search: string, target: string) {
+  let searchIndex = 0;
+
+  for (const char of target) {
+    if (char === search[searchIndex]) {
+      searchIndex += 1;
+    }
+
+    if (searchIndex === search.length) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 const networkColumns = computed<ColumnDef<RpcDebugRecord>[]>(() => [
   {
@@ -81,14 +261,12 @@ const networkColumns = computed<ColumnDef<RpcDebugRecord>[]>(() => [
     size: 96,
     cell: ({ row }) =>
       h(
-        "span",
+        Badge,
         {
-          class: [
-            "inline-flex h-6 items-center rounded px-2 text-xs ring-1",
-            statusClass(row.original.status),
-          ],
+          variant: "outline",
+          class: ["h-6 rounded px-2 text-xs", statusClass(row.original.status)],
         },
-        statusText(row.original),
+        () => statusText(row.original),
       ),
   },
   {
@@ -128,69 +306,118 @@ function relayCopy(text: string, message?: string) {
       class="mb-3 flex flex-none flex-wrap items-center justify-between gap-2"
     >
       <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-        <label class="relative min-w-55 flex-1 sm:max-w-[320px]">
-          <Search
-            class="pointer-events-none absolute top-2.5 left-2.5 size-3.5 text-muted-foreground"
-          />
-          <input
-            v-model="networkFilter"
-            class="peer h-9 w-full rounded-md border border-border bg-background px-2.5 pt-3.5 pr-2.5 pb-1 pl-8 text-xs transition-colors outline-none placeholder:text-transparent focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-            placeholder=" "
-          />
-          <span
-            class="pointer-events-none absolute top-1 left-8 translate-y-0 text-[10px] leading-none font-medium text-muted-foreground transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-xs peer-focus:top-1 peer-focus:translate-y-0 peer-focus:text-[10px]"
+        <div class="relative min-w-55 flex-1 sm:max-w-[320px]">
+          <Command
+            :filter="matchesNetworkFilterValue"
+            :highlight-on-hover="true"
+            class="relative h-9 w-full overflow-visible rounded-md border bg-background shadow-none [&_[data-slot=command-input-wrapper]]:h-9 [&_[data-slot=command-input-wrapper]]:border-b-0 [&_[data-slot=command-input-wrapper]]:px-2.5 [&_[data-slot=command-input]]:h-8 [&_[data-slot=command-input]]:py-1 [&_[data-slot=command-input]]:text-xs"
+            @focusout="handleNetworkFilterFocusOut"
           >
-            筛选方法 / ID / 关键词
-          </span>
-        </label>
-        <select
-          v-model="statusFilter"
-          class="h-8 w-28 rounded-md border border-border bg-background px-2.5 text-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-        >
-          <option value="all">全部状态</option>
-          <option value="pending">等待中</option>
-          <option value="success">成功</option>
-          <option value="error">错误</option>
-          <option value="streaming">推送中</option>
-        </select>
-        <select
-          v-model="kindFilter"
-          class="h-8 w-28 rounded-md border border-border bg-background px-2.5 text-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
-        >
-          <option value="all">全部类型</option>
-          <option value="call">普通调用</option>
-          <option value="subscription">订阅</option>
-          <option value="notification">订阅推送</option>
-          <option value="raw">原始 WS</option>
-        </select>
+            <CommandInput
+              :auto-focus="false"
+              placeholder="筛选方法 / ID / 关键词"
+              @focus="networkFilterSuggestionsOpen = true"
+              @click="networkFilterSuggestionsOpen = true"
+              @update:model-value="handleNetworkFilterInput"
+              @keydown.esc.stop="networkFilterSuggestionsOpen = false"
+            />
+            <CommandList
+              v-if="networkFilterSuggestionsOpen"
+              class="absolute top-full left-0 z-50 mt-1 max-h-64 w-full rounded-md border bg-popover shadow-md"
+              @mousedown.prevent
+            >
+              <CommandEmpty class="py-3 text-xs"> 暂无匹配候选 </CommandEmpty>
+              <CommandGroup
+                v-for="group in networkFilterSuggestionGroups"
+                :key="group.type"
+                :heading="group.heading"
+              >
+                <CommandItem
+                  v-for="suggestion in group.suggestions"
+                  :key="`${suggestion.type}:${suggestion.value}`"
+                  :value="`${suggestion.type}:${suggestion.value}`"
+                  :text-value="suggestion.value"
+                  class="gap-2 text-xs"
+                  @select="applyNetworkFilterSuggestion(suggestion.value)"
+                >
+                  <Badge
+                    variant="outline"
+                    class="h-5 shrink-0 rounded px-1.5 text-[10px]"
+                  >
+                    {{ suggestion.label }}
+                  </Badge>
+                  <span class="min-w-0 truncate font-mono">
+                    {{ suggestion.value }}
+                  </span>
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </div>
+        <Select v-model="statusFilter">
+          <SelectTrigger
+            size="sm"
+            class="h-8 w-28 bg-background px-2.5 text-xs"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部状态</SelectItem>
+            <SelectItem value="pending">等待中</SelectItem>
+            <SelectItem value="success">成功</SelectItem>
+            <SelectItem value="error">错误</SelectItem>
+            <SelectItem value="streaming">推送中</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select v-model="kindFilter">
+          <SelectTrigger
+            size="sm"
+            class="h-8 w-28 bg-background px-2.5 text-xs"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部类型</SelectItem>
+            <SelectItem value="call">普通调用</SelectItem>
+            <SelectItem value="subscription">订阅</SelectItem>
+            <SelectItem value="notification">订阅推送</SelectItem>
+            <SelectItem value="raw">原始 WS</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div class="flex flex-none flex-wrap items-center gap-1.5">
-        <button
-          class="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        <Button
+          variant="outline"
+          size="sm"
+          class="h-8 gap-1.5 px-2.5 text-xs"
           type="button"
           @click="debugStore.isPaused.value = !debugStore.isPaused.value"
         >
           <Play v-if="debugStore.isPaused.value" class="size-3.5" />
           <Pause v-else class="size-3.5" />
           {{ debugStore.isPaused.value ? "继续" : "暂停" }}
-        </button>
-        <button
-          class="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          class="h-8 gap-1.5 px-2.5 text-xs"
           type="button"
           @click="debugStore.clear"
         >
           <Trash2 class="size-3.5" />
           清空
-        </button>
-        <button
-          class="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          class="h-8 gap-1.5 px-2.5 text-xs"
           type="button"
           @click="exportRecords"
         >
           <Download class="size-3.5" />
           导出
-        </button>
+        </Button>
       </div>
     </div>
 
