@@ -42,6 +42,8 @@ export interface UpstreamServer {
   allow_version?: boolean;
   allow_task_type?: TASK_NAME[];
 
+  ignore_cert?: boolean;
+
   [key: string]: any;
 }
 
@@ -61,6 +63,9 @@ export interface BasicAgentConfig {
 
   [key: string]: any;
   connect_timeout_ms: number;
+
+  dynamic_summary_select_disk?: string[];
+  dynamic_summary_select_network_interface?: string[];
 }
 
 export interface AgentConfig extends BasicAgentConfig {
@@ -141,6 +146,19 @@ function oldUpstream2New(upstream: UpstreamServer) {
   });
   delete upstream2.allow_task;
   upstream2.allow_task_type = allow_task_type;
+  upstream2.allow_task = true;
+  return upstream2;
+}
+
+function cleanNewUpstream(upstream: UpstreamServer) {
+  const upstream2: UpstreamServer = JSON.parse(JSON.stringify(upstream));
+  TASK_NAME_LIST.forEach((t) => {
+    if (t === "ping") {
+      delete upstream2["allow_icmp_ping"];
+      return;
+    }
+    delete upstream2["allow_" + t];
+  });
   upstream2.allow_task = true;
   return upstream2;
 }
@@ -263,6 +281,8 @@ async function writeAgentConfig(
   }
   if (compareVersions(version.cargo_version, "0.3.0") < 0) {
     config.server = config.server.map((v) => newUpstream2Old(v));
+  } else {
+    config.server = config.server.map((v) => cleanNewUpstream(v));
   }
 
   const tomlContent = serializeToml(config);

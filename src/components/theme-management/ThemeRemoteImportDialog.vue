@@ -154,6 +154,7 @@ const handleImport = async () => {
           path: bucketName,
           is_http_root: false,
           cors: true,
+          enable: true,
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -274,6 +275,7 @@ const handleImport = async () => {
             path: bucketName,
             is_http_root: true,
             cors: true,
+            enable: true,
           });
         } catch (e) {
           toast.warning(

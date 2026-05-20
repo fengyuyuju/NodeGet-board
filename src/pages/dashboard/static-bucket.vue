@@ -86,6 +86,14 @@ const handleToggleCORS = async (bucket: StaticBucket) => {
   }
 };
 
+const handleToggleEnable = async (bucket: StaticBucket) => {
+  try {
+    await staticBucket.setEnable(bucket.name, !bucket.enable);
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : "更新失败");
+  }
+};
+
 const handleBucketDelete = async (name: string) => {
   deletingBucketName.value = name;
   try {
@@ -148,6 +156,7 @@ const handleCreateAndUpload = async (
       path: bucketName,
       is_http_root: false,
       cors: false,
+      enable: true,
     });
     for (const file of files) {
       await bucketFile.uploadFile(bucketName, file.path, file.base64);
@@ -179,6 +188,7 @@ const handleCreateAndUpload = async (
       @delete="handleBucketDelete"
       @toggle-http-root="handleToggleHttpRoot"
       @toggleCORS="handleToggleCORS"
+      @toggleEnable="handleToggleEnable"
       @refresh="staticBucket.fetchList()"
     />
 

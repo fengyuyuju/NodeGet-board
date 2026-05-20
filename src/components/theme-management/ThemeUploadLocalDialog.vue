@@ -160,6 +160,7 @@ const handleUpload = async () => {
         path: targetName,
         is_http_root: false,
         cors: true,
+        enable: true,
       });
     }
 

@@ -8,6 +8,7 @@ export type StaticBucket = {
   path: string;
   is_http_root: boolean;
   cors: boolean;
+  enable: boolean;
 };
 
 export type StaticBucketInput = Omit<StaticBucket, "id">;
@@ -105,6 +106,12 @@ export function useStaticBucket(backend = useBackendStore().currentBackend) {
     await updateBucket({ ...bucket, cors });
     bucket.cors = cors;
   };
+  const setEnable = async (name: string, enable: boolean): Promise<void> => {
+    const bucket = buckets.value.find((b) => b.name === name);
+    if (!bucket) return;
+    await updateBucket({ ...bucket, enable });
+    bucket.enable = enable;
+  };
 
   return {
     buckets,
@@ -117,6 +124,7 @@ export function useStaticBucket(backend = useBackendStore().currentBackend) {
     deleteBucket,
     enableTheme,
     setCORS,
+    setEnable,
     disableTheme,
   };
 }

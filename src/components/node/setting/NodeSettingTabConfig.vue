@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "vue-i18n";
+import { fetchDynamic } from "@/composables/monitoring/useDynamicMonitoring";
 
 const props = defineProps<{ uuid: string }>();
 
@@ -45,20 +46,13 @@ const staticReportInterval = ref(3600000); // ms
 const terminalShell = ref<"bash" | "cmd">("bash");
 const execMaxCharacter = ref<number | undefined>(undefined);
 const connectTimeout = ref<number | undefined>(undefined);
+const dynamic_summary_select_disk = ref<string[]>([]);
+const dynamic_summary_select_network_interface = ref<string[]>([]);
+const dynamic_summary_select_disk_list = ref<string[]>([]);
+const dynamic_summary_select_network_interface_list = ref<string[]>([]);
 
 // 特性开关 (server config中的allow_*属性)
 const allowTaskType = ref(new Set<TASK_NAME>());
-const allowIcmpPing = ref(false);
-const allowTcpPing = ref(false);
-const allowHttpPing = ref(false);
-const allowHttpRequest = ref(false);
-const allowSelfUpdate = ref(false);
-const allowWebShell = ref(false);
-const allowExecute = ref(false);
-const allowReadConfig = ref(false);
-const allowEditConfig = ref(false);
-const allowIp = ref(false);
-const allowVersion = ref(false);
 
 /**
  * 从 AgentConfig 对象更新 UI 状态
@@ -75,6 +69,10 @@ function syncFromConfig(config: splitConfig) {
   terminalShell.value = basicConfig.terminal_shell || "bash";
   execMaxCharacter.value = basicConfig.exec_max_character;
   connectTimeout.value = basicConfig.connect_timeout_ms;
+  dynamic_summary_select_network_interface.value =
+    basicConfig.dynamic_summary_select_network_interface || [];
+  dynamic_summary_select_disk.value =
+    basicConfig.dynamic_summary_select_disk || [];
 
   // 从 server 配置中提取第一个 server 的 allow_* 属性
   if (currentUpstream) {
@@ -120,6 +118,19 @@ function buildConfig(): AgentConfig {
     config.connect_timeout_ms = connectTimeout.value;
   }
 
+  if (dynamic_summary_select_network_interface.value.length > 0) {
+    config.dynamic_summary_select_network_interface =
+      dynamic_summary_select_network_interface.value;
+  } else {
+    delete config.dynamic_summary_select_network_interface;
+  }
+
+  if (dynamic_summary_select_disk.value.length > 0) {
+    config.dynamic_summary_select_disk = dynamic_summary_select_disk.value;
+  } else {
+    delete config.dynamic_summary_select_disk;
+  }
+
   const currentUpstreamNew: UpstreamServer = {
     ...agentConfig.value.currentUpstream,
     allow_task_type: Array.from(allowTaskType.value),
@@ -148,6 +159,28 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+
+  fetchDynamic(props.uuid, ["network", "disk"], { limit: 1 }).then((res) => {
+    if (!res || !res.length) {
+      return;
+    }
+    const latest = res[0];
+    if (!latest) {
+      return;
+    }
+    if (
+      Array.isArray(latest.network?.interfaces) &&
+      latest.network.interfaces.length > 0
+    ) {
+      dynamic_summary_select_network_interface_list.value =
+        latest.network.interfaces.map((i) => i.interface_name);
+    }
+    if (Array.isArray(latest.disk) && latest.disk.length > 0) {
+      dynamic_summary_select_disk_list.value = latest.disk.map(
+        (d) => d.mount_point,
+      );
+    }
+  });
 });
 
 /**
@@ -187,123 +220,184 @@ async function handleSave() {
     </div>
 
     <template v-else>
-      <!-- 日志等级 -->
-      <div class="space-y-1.5">
-        <Label>{{ $t("dashboard.node.config.logLevel") }}</Label>
-        <Select v-model="logLevel">
-          <SelectTrigger class="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="trace">trace</SelectItem>
-            <SelectItem value="debug">debug</SelectItem>
-            <SelectItem value="info">info</SelectItem>
-            <SelectItem value="warn">warn</SelectItem>
-            <SelectItem value="error">error</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <!-- IP 提供商 -->
-      <div class="space-y-1.5">
-        <Label>{{ $t("dashboard.node.config.ipProvider") }}</Label>
-        <Select v-model="ipProvider">
-          <SelectTrigger class="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ipinfo">Ipinfo</SelectItem>
-            <SelectItem value="cloudflare">Cloudflare</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <!-- 动态监控上报间隔 (ms) -->
-      <div class="space-y-1.5">
-        <Label>{{
-          $t("dashboard.node.config.dynamicSummaryReportInterval")
-        }}</Label>
-        <div class="flex items-center gap-2">
-          <NumberField
-            v-model="dynamicSummaryReportInterval"
-            :min="1000"
-            class="w-40"
-          />
-          <span class="text-sm text-muted-foreground">
-            {{ $t("dashboard.node.config.msUnit") }}
-          </span>
+      <div class="flex gap-10 gap-y-5 flex-wrap content-between w-full">
+        <!-- 日志等级 -->
+        <div class="space-y-1.5">
+          <Label>{{ $t("dashboard.node.config.logLevel") }}</Label>
+          <Select v-model="logLevel">
+            <SelectTrigger class="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="trace">trace</SelectItem>
+              <SelectItem value="debug">debug</SelectItem>
+              <SelectItem value="info">info</SelectItem>
+              <SelectItem value="warn">warn</SelectItem>
+              <SelectItem value="error">error</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      </div>
 
-      <!-- 动态监控上报间隔 (ms) -->
-      <div class="space-y-1.5">
-        <Label>{{ $t("dashboard.node.config.dynamicReportInterval") }}</Label>
-        <div class="flex items-center gap-2">
-          <NumberField
-            v-model="dynamicReportInterval"
-            :min="1000"
-            class="w-40"
-          />
-          <span class="text-sm text-muted-foreground">
-            {{ $t("dashboard.node.config.msUnit") }}
-          </span>
+        <!-- IP 提供商 -->
+        <div class="space-y-1.5">
+          <Label>{{ $t("dashboard.node.config.ipProvider") }}</Label>
+          <Select v-model="ipProvider">
+            <SelectTrigger class="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ipinfo">Ipinfo</SelectItem>
+              <SelectItem value="cloudflare">Cloudflare</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-      </div>
 
-      <!-- 静态监控上报间隔 (ms) -->
-      <div class="space-y-1.5">
-        <Label>{{ $t("dashboard.node.config.staticReportInterval") }}</Label>
-        <div class="flex items-center gap-2">
-          <NumberField
-            v-model="staticReportInterval"
-            :min="1000"
-            class="w-40"
-          />
-          <span class="text-sm text-muted-foreground">
-            {{ $t("dashboard.node.config.msUnit") }}
-          </span>
+        <!-- 动态监控上报间隔 (ms) -->
+        <div class="space-y-1.5">
+          <Label>{{
+            $t("dashboard.node.config.dynamicSummaryReportInterval")
+          }}</Label>
+          <div class="flex items-center gap-2">
+            <NumberField
+              v-model="dynamicSummaryReportInterval"
+              :min="1000"
+              class="w-40"
+            />
+            <span class="text-sm text-muted-foreground">
+              {{ $t("dashboard.node.config.msUnit") }}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <!-- 连接超时 (ms) -->
-      <div class="space-y-1.5">
-        <Label>{{ $t("dashboard.node.config.connectTimeout") }}</Label>
-        <div class="flex items-center gap-2">
+        <!-- 动态监控上报间隔 (ms) -->
+        <div class="space-y-1.5">
+          <Label>{{ $t("dashboard.node.config.dynamicReportInterval") }}</Label>
+          <div class="flex items-center gap-2">
+            <NumberField
+              v-model="dynamicReportInterval"
+              :min="1000"
+              class="w-40"
+            />
+            <span class="text-sm text-muted-foreground">
+              {{ $t("dashboard.node.config.msUnit") }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 静态监控上报间隔 (ms) -->
+        <div class="space-y-1.5">
+          <Label>{{ $t("dashboard.node.config.staticReportInterval") }}</Label>
+          <div class="flex items-center gap-2">
+            <NumberField
+              v-model="staticReportInterval"
+              :min="1000"
+              class="w-40"
+            />
+            <span class="text-sm text-muted-foreground">
+              {{ $t("dashboard.node.config.msUnit") }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 连接超时 (ms) -->
+        <div class="space-y-1.5">
+          <Label>{{ $t("dashboard.node.config.connectTimeout") }}</Label>
+          <div class="flex items-center gap-2">
+            <NumberField
+              :model-value="connectTimeout"
+              :min="0"
+              class="w-40"
+              @update:model-value="connectTimeout = $event"
+            />
+            <span class="text-sm text-muted-foreground">
+              {{ $t("dashboard.node.config.msUnit") }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Terminal Shell -->
+        <div class="space-y-1.5">
+          <Label>{{ $t("dashboard.node.config.terminalShell") }}</Label>
+          <Select v-model="terminalShell">
+            <SelectTrigger class="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bash">bash</SelectItem>
+              <SelectItem value="cmd">cmd</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <!-- exec 最大返回字符数 -->
+        <div class="space-y-1.5">
+          <Label>{{ $t("dashboard.node.config.execMaxCharacter") }}</Label>
           <NumberField
-            :model-value="connectTimeout"
+            :model-value="execMaxCharacter"
             :min="0"
             class="w-40"
-            @update:model-value="connectTimeout = $event"
+            @update:model-value="execMaxCharacter = $event"
           />
-          <span class="text-sm text-muted-foreground">
-            {{ $t("dashboard.node.config.msUnit") }}
-          </span>
         </div>
-      </div>
 
-      <!-- Terminal Shell -->
-      <div class="space-y-1.5">
-        <Label>{{ $t("dashboard.node.config.terminalShell") }}</Label>
-        <Select v-model="terminalShell">
-          <SelectTrigger class="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="bash">bash</SelectItem>
-            <SelectItem value="cmd">cmd</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <!-- exec 最大返回字符数 -->
-      <div class="space-y-1.5">
-        <Label>{{ $t("dashboard.node.config.execMaxCharacter") }}</Label>
-        <NumberField
-          :model-value="execMaxCharacter"
-          :min="0"
-          class="w-40"
-          @update:model-value="execMaxCharacter = $event"
-        />
+        <!-- 磁盘 -->
+        <div class="space-y-1.5">
+          <Label>动态摘要监控磁盘</Label>
+          <Select
+            v-model="dynamic_summary_select_disk"
+            multiple
+            :disabled="dynamic_summary_select_disk_list.length === 0"
+          >
+            <SelectTrigger class="w-48">
+              <SelectValue
+                :placeholder="
+                  dynamic_summary_select_disk_list.length === 0
+                    ? '无可选磁盘'
+                    : '请选择磁盘'
+                "
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="disk in dynamic_summary_select_disk_list"
+                :key="disk"
+                :value="disk"
+              >
+                {{ disk }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <!-- 网卡 -->
+        <div class="space-y-1.5">
+          <Label>动态摘要监控网卡</Label>
+          <Select
+            v-model="dynamic_summary_select_network_interface"
+            multiple
+            :disabled="
+              dynamic_summary_select_network_interface_list.length === 0
+            "
+          >
+            <SelectTrigger class="w-48">
+              <SelectValue
+                :placeholder="
+                  dynamic_summary_select_network_interface_list.length === 0
+                    ? '无可选网卡'
+                    : '请选择网卡'
+                "
+              />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="network in dynamic_summary_select_network_interface_list"
+                :key="network"
+                :value="network"
+              >
+                {{ network }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <!-- 启用特性 -->

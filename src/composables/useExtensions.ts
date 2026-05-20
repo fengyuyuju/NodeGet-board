@@ -165,6 +165,7 @@ export function useExtensions() {
         path: name,
         is_http_root: false,
         cors: true,
+        enable: true,
       });
     } catch (e) {
       try {

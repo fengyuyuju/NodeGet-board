@@ -14,7 +14,12 @@ const detailConn: WsConnection = dedicatedWs
 const _fetchDynamic = async (
   serverUuid: string,
   fields: string[],
-  options?: { timestamp_from?: number; timestamp_to?: number; limit?: number },
+  options?: {
+    timestamp_from?: number;
+    timestamp_to?: number;
+    limit?: number;
+    last?: boolean;
+  },
   timeout: number = 5_000,
 ): Promise<DynamicDetailData[]> => {
   if (!currentBackend.value) return [];
@@ -27,6 +32,7 @@ const _fetchDynamic = async (
     condition.push({ last: null });
   }
   if (options?.limit != null) condition.push({ limit: options.limit });
+  if (typeof options?.last === "boolean") condition.push({ last: null });
 
   if (!detailConn) {
     throw "ws connection not created";

@@ -41,6 +41,7 @@ const emit = defineEmits<{
   refresh: [];
   toggleHttpRoot: [bucket: StaticBucket];
   toggleCORS: [bucket: StaticBucket];
+  toggleEnable: [bucket: StaticBucket];
 }>();
 
 const { currentBackend } = useBackendStore();
@@ -93,6 +94,7 @@ function getPrevieLink(bucket: StaticBucket): string {
         <TableRow>
           <TableHead>Bucket 名称</TableHead>
           <TableHead>挂载路径</TableHead>
+          <TableHead class="w-36">http 访问</TableHead>
           <TableHead class="w-36">CORS</TableHead>
           <TableHead class="w-36">root 路由</TableHead>
           <TableHead class="w-32 text-right">操作</TableHead>
@@ -114,9 +116,23 @@ function getPrevieLink(bucket: StaticBucket): string {
           <TableCell>
             <span>{{ bucket.path }}</span>
           </TableCell>
+          <!-- HTTP 访问 -->
           <TableCell>
             <div class="flex items-center gap-2">
               <Switch
+                :model-value="bucket.enable"
+                @update:model-value="emit('toggleEnable', bucket)"
+              />
+              <span v-if="bucket.enable" class="text-xs text-muted-foreground"
+                >启用</span
+              >
+            </div>
+          </TableCell>
+          <!-- CORS -->
+          <TableCell>
+            <div class="flex items-center gap-2">
+              <Switch
+                :disabled="!bucket.enable"
                 :model-value="bucket.cors"
                 @update:model-value="emit('toggleCORS', bucket)"
               />
@@ -125,9 +141,11 @@ function getPrevieLink(bucket: StaticBucket): string {
               >
             </div>
           </TableCell>
+          <!-- HTTP 根路由 -->
           <TableCell>
             <div class="flex items-center gap-2">
               <Switch
+                :disabled="!bucket.enable"
                 :model-value="bucket.is_http_root"
                 @update:model-value="emit('toggleHttpRoot', bucket)"
               />
