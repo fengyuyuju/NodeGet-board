@@ -324,6 +324,17 @@ const handleDelete = async (index: number) => {
           </Button>
         </div>
       </div>
+      <!-- ignore_cert -->
+      <div class="flex items-start px-4 py-3 gap-4">
+        <span class="text-sm text-muted-foreground w-28 shrink-0 pt-0.5">
+          忽略TLS错误
+        </span>
+        <div class="flex items-start gap-1.5 min-w-0">
+          <span class="text-sm font-mono break-all">{{
+            upstream.ignore_cert ? "是" : "否"
+          }}</span>
+        </div>
+      </div>
       <!-- Operation -->
       <div class="flex items-start px-4 py-3 gap-2 justify-end">
         <Button v-if="upstream.token" @click="openEdit(index)">
