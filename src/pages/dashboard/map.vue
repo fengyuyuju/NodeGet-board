@@ -545,8 +545,8 @@ const mapPoints = computed(() => {
   }
 
   return [...byCountry.values()].map((entry) => ({
-    id: entry.nodeIds[0],
-    name: entry.nodeNames[0],
+    id: entry.nodeIds[0]!,
+    name: entry.nodeNames[0]!,
     region: entry.region,
     isoCode: entry.isoCode,
     nodeIds: entry.nodeIds,

@@ -73,7 +73,7 @@ function heatColor(t: number): string {
   const seg = x >= 0.5 ? 1 : 0;
   const f = (x - seg * 0.5) * 2;
   const a = HEAT[seg];
-  const b = HEAT[seg + 1];
+  const b = HEAT[seg + 1]!;
   return `rgb(${Math.round(a[0] + (b[0] - a[0]) * f)},${Math.round(a[1] + (b[1] - a[1]) * f)},${Math.round(a[2] + (b[2] - a[2]) * f)})`;
 }
 

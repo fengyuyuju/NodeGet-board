@@ -735,7 +735,7 @@ function handlePointerDown(event: PointerEvent) {
 
   const nodeIds: string[] = marker.userData.nodeIds ?? [marker.userData.id];
   if (nodeIds.length === 1) {
-    emit("select-node", nodeIds[0]);
+    emit("select-node", nodeIds[0]!);
     closeGlobePopover();
   } else {
     const cw = rootEl.value?.offsetWidth ?? 800;
@@ -1070,7 +1070,7 @@ onUnmounted(() => {
             class="group flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent"
             @click="
               selectNodeFromGlobePopover(
-                pickedMarker.nodeIds[i] ?? pickedMarker.nodeIds[0],
+                pickedMarker.nodeIds[i] ?? pickedMarker.nodeIds[0]!,
               )
             "
           >
