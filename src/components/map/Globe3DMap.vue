@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { ChevronRight, X } from "lucide-vue-next";
 import { useI18n } from "vue-i18n";
 import { useThemeStore } from "@/stores/theme";
 import { MAP_THEME } from "@/components/map/theme";
@@ -11,6 +12,8 @@ type MapPoint = {
   id: string;
   name: string;
   region: string;
+  isoCode?: string;
+  nodeIds?: string[];
   count: number;
   nodes: string[];
   value: [number, number, number];
@@ -30,6 +33,7 @@ type GeoJsonFeature = {
   geometry: GeoJsonGeometry;
   properties?: {
     name?: string;
+    cname?: string;
   };
 };
 
@@ -42,7 +46,7 @@ type TooltipState = {
   x: number;
   y: number;
   title: string;
-  count: number | null;
+  count: number;
   nodes: string[];
 };
 
@@ -58,15 +62,24 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 const themeStore = useThemeStore();
 
+type PickedMarker = {
+  region: string;
+  isoCode?: string;
+  nodeIds: string[];
+  nodes: string[];
+};
+
 const rootEl = ref<HTMLDivElement | null>(null);
 const loading = ref(true);
 const loadError = ref("");
+const pickedMarker = ref<PickedMarker | null>(null);
+const pickedPos = ref({ x: 0, y: 0 });
 const tooltip = ref<TooltipState>({
   visible: false,
   x: 0,
   y: 0,
   title: "",
-  count: null,
+  count: 0,
   nodes: [],
 });
 
@@ -87,6 +100,7 @@ let lastSignature = "";
 let atmosphereMesh: THREE.Mesh | null = null;
 let starfield: THREE.Points | null = null;
 let currentGeoJson: GeoJson | null = null;
+let cnameMap = new Map<string, string>();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 let hoveredMarker: THREE.Group | null = null;
@@ -370,6 +384,15 @@ function hideTooltip() {
   tooltip.value.visible = false;
 }
 
+function closeGlobePopover() {
+  pickedMarker.value = null;
+}
+
+function selectNodeFromGlobePopover(nodeId: string) {
+  emit("select-node", nodeId);
+  closeGlobePopover();
+}
+
 function normalizeLongitude(lon: number) {
   if (lon > 180) return lon - 360;
   if (lon < -180) return lon + 360;
@@ -493,9 +516,13 @@ function rebuildMarkers() {
     marker.userData = {
       id: point.id,
       region: point.region || point.name,
+      isoCode: point.isoCode,
       count: point.count,
       nodes: point.nodes,
-      selected: point.id === props.selectedNodeId,
+      nodeIds: point.nodeIds ?? [point.id],
+      selected:
+        point.nodeIds?.includes(props.selectedNodeId ?? "") ??
+        point.id === props.selectedNodeId,
     };
     marker.position.copy(position);
     marker.lookAt(position.clone().multiplyScalar(2));
@@ -635,13 +662,20 @@ function handlePointerMove(event: PointerEvent) {
         const countryName = findCountryByLonLat(currentGeoJson, lon, lat);
 
         if (countryName) {
+          const countryNodes = props.points.filter(
+            (p) => p.isoCode === countryName,
+          );
+          const allNodeNames = countryNodes.flatMap((p) => p.nodes);
           tooltip.value = {
             visible: true,
             x: event.clientX - rect.left + 14,
             y: event.clientY - rect.top + 14,
-            title: getDisplayCountryName(countryName, locale.value),
-            count: null,
-            nodes: [],
+            title: getDisplayCountryName(
+              cnameMap.get(countryName) ?? countryName,
+              locale.value,
+            ),
+            count: allNodeNames.length,
+            nodes: allNodeNames,
           };
           if (rootEl.value) rootEl.value.style.cursor = "pointer";
           return;
@@ -694,8 +728,35 @@ function handlePointerDown(event: PointerEvent) {
   const intersects = raycaster.intersectObjects(markerGroup.children, true);
   const hit = intersects.find((item) => item.object.parent?.userData?.id);
   const marker = hit?.object.parent as THREE.Group | null;
-  const nodeId = marker?.userData?.id;
-  if (nodeId) emit("select-node", nodeId);
+  if (!marker?.userData?.id) {
+    closeGlobePopover();
+    return;
+  }
+
+  const nodeIds: string[] = marker.userData.nodeIds ?? [marker.userData.id];
+  if (nodeIds.length === 1) {
+    emit("select-node", nodeIds[0]);
+    closeGlobePopover();
+  } else {
+    const cw = rootEl.value?.offsetWidth ?? 800;
+    const ch = rootEl.value?.offsetHeight ?? 500;
+    const ox = event.clientX - rect.left;
+    const oy = event.clientY - rect.top;
+    const POP_W = 264;
+    const POP_H = 220;
+    const GAP = 14;
+    let x = ox + GAP;
+    let y = oy + GAP;
+    if (x + POP_W > cw - 8) x = ox - POP_W - GAP;
+    if (y + POP_H > ch - 8) y = oy - POP_H - GAP;
+    pickedPos.value = { x: Math.max(8, x), y: Math.max(8, y) };
+    pickedMarker.value = {
+      region: marker.userData.region as string,
+      isoCode: marker.userData.isoCode as string | undefined,
+      nodeIds,
+      nodes: marker.userData.nodes as string[],
+    };
+  }
 }
 
 function resizeRenderer() {
@@ -790,6 +851,7 @@ function destroyScene() {
   earthTexture = null;
   glowTexture = null;
   currentGeoJson = null;
+  cnameMap = new Map();
 }
 
 async function initScene() {
@@ -806,6 +868,10 @@ async function initScene() {
       return response.json();
     })) as GeoJson;
     currentGeoJson = geoJson;
+    for (const f of geoJson.features ?? []) {
+      if (f.properties?.name && f.properties?.cname)
+        cnameMap.set(f.properties.name, f.properties.cname);
+    }
 
     const colors = themePalette.value;
     scene = new THREE.Scene();
@@ -959,6 +1025,66 @@ onUnmounted(() => {
       ref="rootEl"
       class="canvas-host relative z-[2] aspect-[5/3] w-full md:aspect-auto md:h-[540px]"
     />
+    <Transition name="globe-popover">
+      <div
+        v-if="pickedMarker"
+        class="absolute z-[9] w-64 overflow-hidden rounded-xl border border-border bg-popover text-popover-foreground shadow-xl"
+        :style="{ left: `${pickedPos.x}px`, top: `${pickedPos.y}px` }"
+        @click.stop
+        @mousedown.stop
+      >
+        <div
+          class="flex items-center gap-2 border-b border-border/70 px-3 py-2.5"
+        >
+          <div class="min-w-0 flex-1">
+            <div
+              class="flex items-baseline gap-1.5 truncate text-sm font-semibold leading-tight"
+            >
+              <span class="truncate">{{ pickedMarker.region }}</span>
+              <span
+                v-if="pickedMarker.isoCode"
+                class="shrink-0 font-mono text-xs font-normal text-muted-foreground"
+                >{{ pickedMarker.isoCode }}</span
+              >
+            </div>
+            <div class="mt-0.5 font-mono text-[11px] text-muted-foreground">
+              {{
+                t("dashboard.map.tooltip.nodeCount", {
+                  count: pickedMarker.nodes.length,
+                })
+              }}
+            </div>
+          </div>
+          <button
+            class="-mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
+            @click="closeGlobePopover"
+          >
+            <X class="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div class="max-h-72 overflow-auto py-1">
+          <button
+            v-for="(nodeName, i) in pickedMarker.nodes"
+            :key="pickedMarker.nodeIds[i] ?? `${i}-${nodeName}`"
+            type="button"
+            class="group flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent"
+            @click="
+              selectNodeFromGlobePopover(
+                pickedMarker.nodeIds[i] ?? pickedMarker.nodeIds[0],
+              )
+            "
+          >
+            <span class="flex-1 truncate text-foreground/90">{{
+              nodeName
+            }}</span>
+            <ChevronRight
+              class="h-3 w-3 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground"
+            />
+          </button>
+        </div>
+      </div>
+    </Transition>
+
     <div
       v-if="tooltip.visible"
       class="pointer-events-none absolute z-[8] max-w-[260px] rounded-2xl border px-[0.95rem] py-[0.8rem] text-xs leading-[1.35] backdrop-blur-[14px]"
@@ -966,7 +1092,7 @@ onUnmounted(() => {
       :style="{ left: `${tooltip.x}px`, top: `${tooltip.y}px` }"
     >
       <div class="font-semibold">{{ tooltip.title }}</div>
-      <div v-if="tooltip.count !== null" :class="tooltipMetaClass">
+      <div v-if="tooltip.count > 0" :class="tooltipMetaClass">
         {{ t("dashboard.map.tooltip.nodeCount", { count: tooltip.count }) }}
       </div>
       <div
@@ -1060,5 +1186,19 @@ onUnmounted(() => {
   .globe-grid {
     background-size: 24px 24px;
   }
+}
+
+.globe-popover-enter-active,
+.globe-popover-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  transform-origin: top left;
+}
+
+.globe-popover-enter-from,
+.globe-popover-leave-to {
+  opacity: 0;
+  transform: scale(0.94);
 }
 </style>

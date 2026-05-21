@@ -436,6 +436,7 @@ const nodeList = computed(() => {
       return {
         id: server.uuid,
         nodeName: server.customName || server.uuid.slice(0, 8),
+        isoCode: server.region?.trim().toUpperCase(),
         countryName: getCountryNameFromRegion(server.region),
         region:
           (getCountryNameFromRegion(server.region)
@@ -467,6 +468,7 @@ const nodeList = computed(() => {
         id: node.id,
         name: node.nodeName,
         region: node.region,
+        isoCode: node.isoCode,
         countryName: node.countryName,
         count: 1,
         nodes: [node.nodeName],
@@ -491,13 +493,68 @@ const unlockedCountries = computed(() => {
   return Array.from(
     new Set(
       visibleServers.value
-        .map((server) => getCountryNameFromRegion(server.region))
-        .filter((country): country is string => Boolean(country)),
+        .map((server) => server.region?.trim().toUpperCase())
+        .filter((r): r is string => Boolean(r)),
     ),
   );
 });
 
-const mapPoints = computed(() => nodeList.value);
+const mapPoints = computed(() => {
+  const byCountry = new Map<
+    string,
+    {
+      isoCode: string;
+      region: string;
+      coord: [number, number];
+      nodeIds: string[];
+      nodeNames: string[];
+    }
+  >();
+
+  for (const server of visibleServers.value) {
+    const iso = server.region?.trim().toUpperCase();
+    if (!iso) continue;
+    const hasCustomCoord =
+      Number.isFinite(server.longitude) && Number.isFinite(server.latitude);
+    const regionMeta = REGION_COORDS[iso];
+    const coord: [number, number] | null = hasCustomCoord
+      ? [server.longitude as number, server.latitude as number]
+      : (regionMeta?.coord ?? null);
+    if (!coord) continue;
+
+    if (!byCountry.has(iso)) {
+      byCountry.set(iso, {
+        isoCode: iso,
+        region:
+          (getCountryNameFromRegion(iso)
+            ? getDisplayCountryName(
+                getCountryNameFromRegion(iso)!,
+                locale.value,
+              )
+            : null) ||
+          regionMeta?.name ||
+          iso,
+        coord,
+        nodeIds: [],
+        nodeNames: [],
+      });
+    }
+    const entry = byCountry.get(iso)!;
+    entry.nodeIds.push(server.uuid);
+    entry.nodeNames.push(server.customName || server.uuid.slice(0, 8));
+  }
+
+  return [...byCountry.values()].map((entry) => ({
+    id: entry.nodeIds[0],
+    name: entry.nodeNames[0],
+    region: entry.region,
+    isoCode: entry.isoCode,
+    nodeIds: entry.nodeIds,
+    count: entry.nodeIds.length,
+    nodes: entry.nodeNames,
+    value: [...entry.coord, entry.nodeIds.length] as [number, number, number],
+  }));
+});
 
 watch(
   nodeList,
@@ -638,8 +695,11 @@ watch(
                 <div class="truncate font-medium text-foreground">
                   {{ node.name }}
                 </div>
-                <div class="truncate text-xs text-muted-foreground">
-                  {{ node.region }}
+                <div class="text-xs text-muted-foreground">
+                  <span class="truncate">{{ node.region }}</span>
+                  <span v-if="node.isoCode" class="ml-1 font-mono opacity-50">{{
+                    node.isoCode
+                  }}</span>
                 </div>
               </div>
               <span
