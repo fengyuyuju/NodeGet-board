@@ -89,9 +89,7 @@ const initForm = ref<{
 });
 
 const handleManage = (backend: Backend) => {
-  router.push(
-    `/dashboard/servers-detail/${encodeURIComponent(backend.url)}:::${encodeURIComponent(backend.token)}`,
-  );
+  router.push(`/dashboard/servers-detail/${backend.name}`);
 };
 
 const handleSelect = async (backend: Backend) => {

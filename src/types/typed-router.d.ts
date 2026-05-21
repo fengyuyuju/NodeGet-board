@@ -65,7 +65,7 @@ declare module 'vue-router/auto-routes' {
       | '/dashboard/overview'
       | '/dashboard/scripts'
       | '/dashboard/servers'
-      | '/dashboard/servers-detail/[backendId]'
+      | '/dashboard/servers-detail/[backendName]'
       | '/dashboard/settings'
       | '/dashboard/settings/general'
       | '/dashboard/settings/site'
@@ -298,11 +298,11 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/dashboard/servers-detail/[backendId]': RouteRecordInfo<
-      '/dashboard/servers-detail/[backendId]',
-      '/dashboard/servers-detail/:backendId',
-      { backendId: ParamValue<true> },
-      { backendId: ParamValue<false> },
+    '/dashboard/servers-detail/[backendName]': RouteRecordInfo<
+      '/dashboard/servers-detail/[backendName]',
+      '/dashboard/servers-detail/:backendName',
+      { backendName: ParamValue<true> },
+      { backendName: ParamValue<false> },
       | never
     >,
     '/dashboard/settings': RouteRecordInfo<
@@ -456,7 +456,7 @@ declare module 'vue-router/auto-routes' {
         | '/dashboard/overview'
         | '/dashboard/scripts'
         | '/dashboard/servers'
-        | '/dashboard/servers-detail/[backendId]'
+        | '/dashboard/servers-detail/[backendName]'
         | '/dashboard/settings'
         | '/dashboard/settings/general'
         | '/dashboard/settings/site'
@@ -664,9 +664,9 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
-    'src/pages/dashboard/servers-detail/[backendId].vue': {
+    'src/pages/dashboard/servers-detail/[backendName].vue': {
       routes:
-        | '/dashboard/servers-detail/[backendId]'
+        | '/dashboard/servers-detail/[backendName]'
       views:
         | never
     }

@@ -131,7 +131,7 @@ export function useExtensions() {
   const bucketBaseUrl = computed(() => {
     try {
       const url = new URL(httpBaseUrl.value);
-      return `${url.protocol}//${url.host}`;
+      return url.origin;
     } catch {
       return httpBaseUrl.value;
     }
@@ -674,7 +674,7 @@ export function useExtensions() {
     if (storage === "static") {
       return `${bucketBaseUrl.value}/nodeget/static/${getBucketName(extensionId)}/${path}`;
     }
-    return `${httpBaseUrl.value}/worker-route/static-worker-route/${extensionId}/${path}`;
+    return `${bucketBaseUrl.value}/worker-route/static-worker-route/${extensionId}/${path}`;
   };
 
   const getIframeUrl = async (
@@ -692,7 +692,7 @@ export function useExtensions() {
       const route = workerName
         ? ((await jsRuntime.getWorker(workerName))?.route ?? extensionId)
         : extensionId;
-      base = `${httpBaseUrl.value}/worker-route/${route}/${workerEntry}`;
+      base = `${bucketBaseUrl.value}/worker-route/${route}/${workerEntry}`;
     } else {
       base = getStaticUrl(extensionId, entry, storage);
     }
