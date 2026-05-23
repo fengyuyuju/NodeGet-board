@@ -1,4 +1,10 @@
 import type { App } from "vue";
+import {
+  setupDevtoolsPlugin,
+  type DevtoolsPluginApi,
+  type PluginDescriptor,
+  type TimelineEvent,
+} from "@vue/devtools-api";
 import type { RouteComponent, RouteRecordRaw, Router } from "vue-router";
 
 /** `() => import(...)` 形式生成的懒加载组件加载器。 */
@@ -58,7 +64,13 @@ type RouteInspectorEntry = {
 };
 
 /** 预加载事件在 Devtools 时间线中的日志等级。 */
-type DevtoolsLogType = "default" | "warning" | "error";
+type DevtoolsLogType = NonNullable<TimelineEvent["logType"]>;
+type RoutePrefetchDevtoolsApi = DevtoolsPluginApi<Record<string, never>>;
+type RoutePrefetchDevtoolsSetup = (api: RoutePrefetchDevtoolsApi) => void;
+type RegisterRoutePrefetchDevtoolsPlugin = (
+  descriptor: PluginDescriptor,
+  setupFn: RoutePrefetchDevtoolsSetup,
+) => void;
 
 /** Devtools 注册前后都会使用的时间线事件结构。 */
 type DevtoolsTimelineEvent = {
@@ -66,63 +78,6 @@ type DevtoolsTimelineEvent = {
   subtitle?: string;
   data: Record<string, unknown>;
   logType?: DevtoolsLogType;
-};
-
-/** Devtools Inspector 树节点的最小结构定义。 */
-type InspectorNode = {
-  id: string;
-  label: string;
-  children?: InspectorNode[];
-  tags?: Array<{
-    label: string;
-    textColor: number;
-    backgroundColor: number;
-    tooltip?: string;
-  }>;
-};
-
-/** Vue Devtools Inspector 状态面板所需的最小结构定义。 */
-type InspectorState = Record<
-  string,
-  Array<{
-    key: string;
-    value: unknown;
-  }>
->;
-
-/** 当前插件实际使用到的 Vue Devtools API 子集。 */
-type DevtoolsApi = {
-  addTimelineLayer(options: { id: string; label: string; color: number }): void;
-  addTimelineEvent(options: {
-    layerId: string;
-    event: {
-      time: number;
-      title: string;
-      subtitle?: string;
-      data: Record<string, unknown>;
-      logType?: DevtoolsLogType;
-    };
-  }): void;
-  addInspector(options: { id: string; label: string; icon?: string }): void;
-  sendInspectorTree(inspectorId: string): void;
-  sendInspectorState(inspectorId: string): void;
-  on: {
-    getInspectorTree(
-      handler: (payload: {
-        inspectorId: string;
-        filter: string;
-        rootNodes: InspectorNode[];
-      }) => void,
-    ): void;
-    getInspectorState(
-      handler: (payload: {
-        inspectorId: string;
-        nodeId: string;
-        state: InspectorState;
-      }) => void,
-    ): void;
-  };
-  now?(): number;
 };
 
 class LoaderRegistry {
@@ -252,7 +207,7 @@ class DevtoolsBridge {
     skipped: 0x6b7280,
   };
 
-  private api: DevtoolsApi | null = null;
+  private api: RoutePrefetchDevtoolsApi | null = null;
   private layerAdded = false;
   private inspectorAdded = false;
   private snapshotActive = false;
@@ -272,23 +227,7 @@ class DevtoolsBridge {
   attach(app: App) {
     if (typeof window === "undefined") return;
 
-    const target = window as Window & {
-      __VUE_DEVTOOLS_GLOBAL_HOOK__?: {
-        emit: (
-          event: string,
-          pluginDescriptor: Record<string, unknown>,
-          setupFn: (api: DevtoolsApi) => void,
-        ) => void;
-      };
-      __VUE_DEVTOOLS_PLUGIN_API_AVAILABLE__?: boolean;
-      __VUE_DEVTOOLS_PLUGINS__?: Array<{
-        pluginDescriptor: Record<string, unknown>;
-        setupFn: (api: DevtoolsApi) => void;
-        proxy: null;
-      }>;
-    };
-
-    const pluginDescriptor = {
+    const pluginDescriptor: PluginDescriptor = {
       id: this.pluginId,
       label: "Route Prefetch",
       packageName: "nodeget-board",
@@ -297,26 +236,16 @@ class DevtoolsBridge {
       enableEarlyProxy: false,
     };
 
-    const setupFn = (api: DevtoolsApi) => {
-      this.api = api;
-      this.ensureLayer();
-      this.ensureInspector();
-      this.flushPendingEvents();
-      this.updateInspector();
-    };
-
-    const hook = target.__VUE_DEVTOOLS_GLOBAL_HOOK__;
-    if (hook) {
-      hook.emit("devtools-plugin:setup", pluginDescriptor, setupFn);
-      return;
-    }
-
-    target.__VUE_DEVTOOLS_PLUGINS__ = target.__VUE_DEVTOOLS_PLUGINS__ || [];
-    target.__VUE_DEVTOOLS_PLUGINS__.push({
+    (setupDevtoolsPlugin as RegisterRoutePrefetchDevtoolsPlugin)(
       pluginDescriptor,
-      setupFn,
-      proxy: null,
-    });
+      (api) => {
+        this.api = api;
+        this.ensureLayer();
+        this.ensureInspector();
+        this.flushPendingEvents();
+        this.updateInspector();
+      },
+    );
   }
 
   log(message: string, data: Record<string, unknown> = {}) {
