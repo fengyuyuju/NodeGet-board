@@ -11,8 +11,8 @@ definePage({
   },
 });
 
-const route = useRoute();
-const uuid = (route.params as { uuid: string }).uuid;
+const route = useRoute("/dashboard/node/[uuid]/webshell");
+const uuid = route.params.uuid;
 
 const { currentBackend } = useBackendStore();
 
@@ -24,8 +24,8 @@ const webshellReady = computed(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
-    <div class="flex-1 rounded-md overflow-hidden">
+  <div class="flex h-full flex-col">
+    <div class="flex-1 overflow-hidden rounded-md">
       <WebTerminal
         v-if="webshellReady"
         :rpc-url="currentBackend?.url || ''"

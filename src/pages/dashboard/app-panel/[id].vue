@@ -9,9 +9,9 @@ import type { Extension } from "@/composables/useExtensions";
 
 definePage({ meta: { title: "", hidden: true } });
 
-const route = useRoute();
+const route = useRoute("/dashboard/app-panel/[id]");
 const router = useRouter();
-const extensionId = computed(() => (route.params as Record<string, string>).id);
+const extensionId = computed(() => route.params.id);
 
 const { extensions, loading, fetchExtensions } = useExtensions();
 
@@ -40,14 +40,14 @@ const handleUpdated = (ext: Extension) => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col gap-4 overflow-hidden">
+  <div class="flex h-full flex-col gap-4 overflow-hidden">
     <div class="flex items-center gap-3">
       <Button
         variant="ghost"
         size="sm"
         @click="router.push('/dashboard/app-panel')"
       >
-        <ArrowLeft class="h-4 w-4 mr-1" />
+        <ArrowLeft class="mr-1 h-4 w-4" />
         返回
       </Button>
       <h2 class="text-xl font-semibold">{{ extension?.app.name }}</h2>

@@ -9,10 +9,8 @@ definePage({
   meta: { title: "", hidden: true },
 });
 
-const route = useRoute();
-const routeName = computed(
-  () => (route.params as Record<string, string>).extensionRoute ?? "",
-);
+const route = useRoute("/dashboard/app/[extensionRoute]");
+const routeName = computed(() => route.params.extensionRoute);
 
 const { extensions, fetchExtensions, getIframeUrl } = useExtensions();
 
@@ -69,7 +67,7 @@ watch(
 </script>
 
 <template>
-  <div class="h-full w-full flex flex-col">
+  <div class="flex h-full w-full flex-col">
     <div v-if="!ready" class="flex flex-1 items-center justify-center">
       <div
         class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"
@@ -88,7 +86,7 @@ watch(
       v-else
       ref="iframeEl"
       :src="iframeUrl"
-      class="flex-1 w-full border-0"
+      class="w-full flex-1 border-0"
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       :title="routeName"
     />

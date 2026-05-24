@@ -15,7 +15,7 @@ const route = useRoute("/dashboard/bucket/[name]");
 const router = useRouter();
 const bucketFile = useStaticBucketFile();
 
-const bucketName = route.params.name;
+const bucketName = (route.params as { name: string }).name;
 
 const deletingFilePath = ref<string | null>(null);
 const savingFile = ref(false);

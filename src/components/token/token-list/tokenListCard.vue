@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -31,8 +32,17 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Eye, Pencil, Trash2, RotateCcw, Search } from "lucide-vue-next";
+import {
+  Eye,
+  Pencil,
+  Trash2,
+  RotateCcw,
+  Search,
+  LockKeyhole,
+} from "lucide-vue-next";
 import { useTokenListHook, type Token } from "@/composables/token/useTokenList";
+import { getPasswordChangeValidationError } from "@/composables/token/tokenSecret";
+import TokenSuccessDialog from "../components/TokenSuccessDialog.vue";
 
 const useTokenList = useTokenListHook();
 const router = useRouter();
@@ -52,6 +62,16 @@ const resetTokenLoading = ref(false);
 // 控制是否显示重置Token结果
 const showResetTokenResult = ref(false);
 const isFirstLoad = ref(true);
+const selectedResetToken = ref<Token | null>(null);
+const changePasswordOpen = ref(false);
+const changePasswordLoading = ref(false);
+const selectedPasswordToken = ref<Token | null>(null);
+const newPassword = ref("");
+const confirmPassword = ref("");
+const rolledTokenInfo = ref({
+  key: "",
+  secret: "",
+});
 
 const emit = defineEmits<{ "first-load-empty": [] }>();
 
@@ -168,10 +188,94 @@ const handleDeleteToken = (deleteToken: Token) => {
 
 // 打开重置Token弹窗
 const handleOpenResetToken = (token: Token) => {
+  selectedResetToken.value = token;
   resetTokenOpen.value = true;
 };
 // 确认重置Token操作
-const handleConfirmResetToken = (token: Token) => {};
+const handleConfirmResetToken = () => {
+  if (!selectedResetToken.value?.token_key) return;
+
+  resetTokenLoading.value = true;
+  useTokenList
+    .rollTokenSecret(selectedResetToken.value.token_key)
+    .then((result) => {
+      if (result.key && result.secret) {
+        rolledTokenInfo.value = {
+          key: result.key,
+          secret: result.secret,
+        };
+        resetTokenOpen.value = false;
+        showResetTokenResult.value = true;
+        handleGetTokenList();
+      }
+    })
+    .finally(() => {
+      resetTokenLoading.value = false;
+    });
+};
+
+watch(resetTokenOpen, (open) => {
+  if (!open) {
+    selectedResetToken.value = null;
+    resetTokenLoading.value = false;
+  }
+});
+
+const changePasswordError = computed(() =>
+  getPasswordChangeValidationError(newPassword.value, confirmPassword.value),
+);
+
+const changePasswordErrorMessage = computed(() => {
+  if (!changePasswordError.value) return "";
+
+  return t(
+    `dashboard.token.list.changePasswordDialog.errors.${changePasswordError.value}`,
+  );
+});
+
+const handleOpenChangePassword = (token: Token) => {
+  if (!token.username) return;
+
+  selectedPasswordToken.value = token;
+  newPassword.value = "";
+  confirmPassword.value = "";
+  changePasswordOpen.value = true;
+};
+
+const handleConfirmChangePassword = () => {
+  if (
+    !selectedPasswordToken.value?.token_key ||
+    !selectedPasswordToken.value.username ||
+    changePasswordError.value
+  ) {
+    return;
+  }
+
+  changePasswordLoading.value = true;
+  useTokenList
+    .changeTokenPassword(
+      selectedPasswordToken.value.token_key,
+      newPassword.value,
+    )
+    .then((success) => {
+      if (success) {
+        changePasswordOpen.value = false;
+        handleGetTokenList();
+      }
+    })
+    .finally(() => {
+      changePasswordLoading.value = false;
+    });
+};
+
+watch(changePasswordOpen, (open) => {
+  if (!open) {
+    selectedPasswordToken.value = null;
+    newPassword.value = "";
+    confirmPassword.value = "";
+    changePasswordLoading.value = false;
+  }
+});
 </script>
 
 <template>
@@ -179,9 +283,9 @@ const handleConfirmResetToken = (token: Token) => {};
     <div
       class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
     >
-      <div class="relative flex-1 max-w-sm">
+      <div class="relative max-w-sm flex-1">
         <Search
-          class="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+          class="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground"
         />
         <Input
           v-model="searchKeyword"
@@ -250,7 +354,7 @@ const handleConfirmResetToken = (token: Token) => {};
             <TableCell>{{ token.username }}</TableCell>
             <TableCell class="font-mono">{{ token.token_key }}</TableCell>
             <TableCell>{{ token.token_limit?.length ?? 0 }}</TableCell>
-            <TableCell class="flex gap-2 w-20">
+            <TableCell class="flex w-32 gap-2">
               <!-- 查看按钮 -->
               <Button
                 variant="ghost"
@@ -270,6 +374,20 @@ const handleConfirmResetToken = (token: Token) => {};
                 @click="handleOpenResetToken(token)"
               >
                 <RotateCcw />
+              </Button>
+              <!-- 修改密码按钮 -->
+              <Button
+                variant="ghost"
+                size="sm"
+                :disabled="!token.username"
+                :title="
+                  token.username
+                    ? t('dashboard.token.list.changePasswordDialog.title')
+                    : t('dashboard.token.list.changePasswordDialog.disabledTip')
+                "
+                @click="handleOpenChangePassword(token)"
+              >
+                <LockKeyhole />
               </Button>
               <!-- 删除操作 -->
               <Dialog>
@@ -321,7 +439,7 @@ const handleConfirmResetToken = (token: Token) => {};
         </TableBody>
       </Table>
 
-      <div class="w-full flex content-between">
+      <div class="flex w-full content-between">
         <Pagination
           v-slot="{ page: currentPage }"
           v-model:page="page"
@@ -364,17 +482,42 @@ const handleConfirmResetToken = (token: Token) => {};
   <!-- 重置 Token 弹窗 -->
   <Dialog v-model:open="resetTokenOpen">
     <DialogContent class="w-400">
-      <DialogTitle>
-        {{ t("dashboard.token.list.resetDialog.title") }}
-      </DialogTitle>
-      <DialogDescription>
-        {{ t("dashboard.token.list.resetDialog.description") }}
-      </DialogDescription>
-      <!-- {{ t('dashboard.token.list.resetDialog.confirm') }} -->
-      开发中......
+      <DialogHeader>
+        <DialogTitle>
+          {{ t("dashboard.token.list.resetDialog.title") }}
+        </DialogTitle>
+        <DialogDescription>
+          {{ t("dashboard.token.list.resetDialog.description") }}
+        </DialogDescription>
+      </DialogHeader>
+      <div class="space-y-2 py-2 text-sm">
+        <div class="text-muted-foreground">
+          {{ t("dashboard.token.list.resetDialog.confirm") }}
+        </div>
+        <div class="space-y-1 rounded-md border bg-muted/40 p-3">
+          <div>
+            <span class="text-muted-foreground">
+              {{ t("dashboard.token.list.table.username") }}:
+            </span>
+            <span class="ml-2">
+              {{ selectedResetToken?.username || "-" }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-foreground">
+              {{ t("dashboard.token.list.table.tokenKey") }}:
+            </span>
+            <span class="ml-2 font-mono">
+              {{ selectedResetToken?.token_key || "-" }}
+            </span>
+          </div>
+        </div>
+      </div>
       <DialogFooter>
         <DialogClose as-child>
-          <Button variant="outline"> {{ t("dashboard.token.cancel") }} </Button>
+          <Button variant="outline" :disabled="resetTokenLoading">
+            {{ t("dashboard.token.cancel") }}
+          </Button>
         </DialogClose>
         <Button @click="handleConfirmResetToken">
           <div v-if="resetTokenLoading" class="flex items-center">
@@ -389,4 +532,93 @@ const handleConfirmResetToken = (token: Token) => {};
       </DialogFooter>
     </DialogContent>
   </Dialog>
+
+  <!-- 修改密码弹窗 -->
+  <Dialog v-model:open="changePasswordOpen">
+    <DialogContent class="w-400">
+      <DialogHeader>
+        <DialogTitle>
+          {{ t("dashboard.token.list.changePasswordDialog.title") }}
+        </DialogTitle>
+        <DialogDescription>
+          {{ t("dashboard.token.list.changePasswordDialog.description") }}
+        </DialogDescription>
+      </DialogHeader>
+      <div class="space-y-4 py-2 text-sm">
+        <div class="space-y-1 rounded-md border bg-muted/40 p-3">
+          <div>
+            <span class="text-muted-foreground">
+              {{ t("dashboard.token.list.table.username") }}:
+            </span>
+            <span class="ml-2">
+              {{ selectedPasswordToken?.username || "-" }}
+            </span>
+          </div>
+          <div>
+            <span class="text-muted-foreground">
+              {{ t("dashboard.token.list.table.tokenKey") }}:
+            </span>
+            <span class="ml-2 font-mono">
+              {{ selectedPasswordToken?.token_key || "-" }}
+            </span>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <Input
+            v-model="newPassword"
+            type="password"
+            autocomplete="new-password"
+            :placeholder="
+              t('dashboard.token.list.changePasswordDialog.newPassword')
+            "
+          />
+          <Input
+            v-model="confirmPassword"
+            type="password"
+            autocomplete="new-password"
+            :placeholder="
+              t('dashboard.token.list.changePasswordDialog.confirmPassword')
+            "
+          />
+          <div
+            v-if="
+              (newPassword || confirmPassword) && changePasswordErrorMessage
+            "
+            class="text-sm text-red-500"
+          >
+            {{ changePasswordErrorMessage }}
+          </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button variant="outline" :disabled="changePasswordLoading">
+            {{ t("dashboard.token.cancel") }}
+          </Button>
+        </DialogClose>
+        <Button
+          :disabled="changePasswordLoading || !!changePasswordError"
+          @click="handleConfirmChangePassword"
+        >
+          <div v-if="changePasswordLoading" class="flex items-center">
+            <Spinner />{{
+              t("dashboard.token.list.changePasswordDialog.confirmingButton")
+            }}
+          </div>
+          <div v-else>
+            {{ t("dashboard.token.list.changePasswordDialog.confirmButton") }}
+          </div>
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
+  <TokenSuccessDialog
+    v-model:open="showResetTokenResult"
+    :token-key="rolledTokenInfo.key"
+    :token-secret="rolledTokenInfo.secret"
+    :title="t('dashboard.token.list.resetSuccessDialog.title')"
+    :description="t('dashboard.token.list.resetSuccessDialog.description')"
+  />
 </template>

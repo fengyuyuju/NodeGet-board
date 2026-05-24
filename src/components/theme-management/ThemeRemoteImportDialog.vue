@@ -328,9 +328,9 @@ const handleImport = async () => {
 
         <div
           v-if="!targetBucket"
-          class="rounded-md border overflow-hidden text-sm"
+          class="overflow-hidden rounded-md border text-sm"
         >
-          <div class="bg-muted px-3 py-1.5 font-medium text-xs">安装选项</div>
+          <div class="bg-muted px-3 py-1.5 text-xs font-medium">安装选项</div>
           <div class="divide-y">
             <div class="flex items-center justify-between px-3 py-2">
               <span>安装后自动启用</span>
@@ -350,7 +350,7 @@ const handleImport = async () => {
                   />
                   <Label
                     for="preset-monitor-only"
-                    class="font-normal cursor-pointer"
+                    class="cursor-pointer font-normal"
                     >纯监控</Label
                   >
                 </div>
@@ -361,13 +361,13 @@ const handleImport = async () => {
                   />
                   <Label
                     for="preset-monitor-ping"
-                    class="font-normal cursor-pointer"
+                    class="cursor-pointer font-normal"
                     >监控+ping</Label
                   >
                 </div>
                 <div class="flex items-center gap-1.5">
                   <RadioGroupItem id="preset-none" value="none" />
-                  <Label for="preset-none" class="font-normal cursor-pointer"
+                  <Label for="preset-none" class="cursor-pointer font-normal"
                     >不使用预设</Label
                   >
                 </div>
@@ -378,14 +378,14 @@ const handleImport = async () => {
 
         <div
           v-if="targetBucket"
-          class="rounded-md border overflow-hidden text-sm"
+          class="overflow-hidden rounded-md border text-sm"
         >
-          <div class="bg-muted px-3 py-1.5 font-medium text-xs">更新选项</div>
+          <div class="bg-muted px-3 py-1.5 text-xs font-medium">更新选项</div>
           <div class="divide-y">
             <div class="flex items-center justify-between px-3 py-2">
               <span>主题配置（user_preferences）</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-userPrefs"
@@ -395,7 +395,7 @@ const handleImport = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-userPrefs"
@@ -410,7 +410,7 @@ const handleImport = async () => {
             <div class="flex items-center justify-between px-3 py-2">
               <span>Token（site_tokens）</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-siteTokens"
@@ -420,7 +420,7 @@ const handleImport = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-siteTokens"
@@ -435,7 +435,7 @@ const handleImport = async () => {
             <div class="flex items-center justify-between px-3 py-2">
               <span>自定义 CSS</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-css"
@@ -445,7 +445,7 @@ const handleImport = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-css"
@@ -460,7 +460,7 @@ const handleImport = async () => {
             <div class="flex items-center justify-between px-3 py-2">
               <span>自定义 JS</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-js"
@@ -470,7 +470,7 @@ const handleImport = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="ri-keep-js"
@@ -494,7 +494,7 @@ const handleImport = async () => {
 
         <div v-if="isImporting" class="space-y-2">
           <div class="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 class="h-4 w-4 animate-spin shrink-0" />
+            <Loader2 class="h-4 w-4 shrink-0 animate-spin" />
             <span>
               {{ stepLabel[step] }}
               <template v-if="step === 'uploading'">
@@ -504,7 +504,7 @@ const handleImport = async () => {
           </div>
           <div
             v-if="step === 'uploading' && progress.total > 0"
-            class="h-1.5 w-full bg-muted rounded-full overflow-hidden"
+            class="h-1.5 w-full overflow-hidden rounded-full bg-muted"
           >
             <div
               class="h-full bg-primary transition-all"
@@ -517,9 +517,9 @@ const handleImport = async () => {
 
         <div
           v-if="step === 'error' && errorMsg"
-          class="flex items-start gap-2 rounded-md bg-destructive/10 border border-destructive/20 px-3 py-2 text-sm text-destructive"
+          class="flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
-          <AlertCircle class="h-4 w-4 mt-0.5 shrink-0" />
+          <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
           <span>{{ errorMsg }}</span>
         </div>
       </div>
@@ -536,7 +536,7 @@ const handleImport = async () => {
           :disabled="!urlInput.trim() || isImporting"
           @click="handleImport"
         >
-          <Loader2 v-if="isImporting" class="h-4 w-4 animate-spin mr-1" />
+          <Loader2 v-if="isImporting" class="mr-1 h-4 w-4 animate-spin" />
           导入
         </Button>
       </DialogFooter>

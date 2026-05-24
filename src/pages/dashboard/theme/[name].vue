@@ -12,7 +12,7 @@ const route = useRoute("/dashboard/theme/[name]");
 const router = useRouter();
 const staticBucket = useStaticBucket();
 
-const bucketName = computed(() => route.params.name);
+const bucketName = computed(() => (route.params as { name: string }).name);
 
 const themeName = computed(
   () =>

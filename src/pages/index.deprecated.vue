@@ -55,8 +55,8 @@ onUnmounted(() => stop());
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen">
-    <div class="container mx-auto p-6 space-y-6 flex-1">
+  <div class="flex min-h-screen flex-col">
+    <div class="container mx-auto flex-1 space-y-6 p-6">
       <HeaderView :status="status" />
 
       <Alert v-if="error" variant="destructive">
@@ -67,7 +67,7 @@ onUnmounted(() => stop());
 
       <div
         v-if="servers.length === 0 && !loading"
-        class="text-center py-10 text-muted-foreground"
+        class="py-10 text-center text-muted-foreground"
       >
         {{ $t("home.waitingData") }}
       </div>
@@ -80,16 +80,16 @@ onUnmounted(() => stop());
         <router-link
           v-for="server in sortedServers"
           :key="server.uuid"
-          :to="{ name: '/server-detail', params: { uuid: server.uuid } }"
+          :to="{ name: '/server-detail/[uuid]', params: { uuid: server.uuid } }"
           class="block h-full"
         >
-          <Card class="hover:shadow-md transition-shadow h-full cursor-pointer">
+          <Card class="h-full cursor-pointer transition-shadow hover:shadow-md">
             <CardHeader class="pb-3">
               <div class="flex items-start justify-between">
                 <CardTitle
                   class="flex items-center gap-2 text-base font-medium"
                 >
-                  <div class="p-2 bg-primary/10 rounded-lg">
+                  <div class="rounded-lg bg-primary/10 p-2">
                     <Server class="h-4 w-4 text-primary" />
                   </div>
                   <div class="flex flex-col">
@@ -107,7 +107,7 @@ onUnmounted(() => stop());
                       >
                     </span>
                     <span
-                      class="text-xs text-muted-foreground font-normal mt-1 flex items-center gap-1"
+                      class="mt-1 flex items-center gap-1 text-xs font-normal text-muted-foreground"
                     >
                       <Clock class="h-3 w-3" />
                       {{ formatUptime(server.uptime ?? 0) }}
@@ -116,7 +116,7 @@ onUnmounted(() => stop());
                 </CardTitle>
                 <Badge
                   variant="outline"
-                  class="font-normal text-xs"
+                  class="text-xs font-normal"
                   :title="showOS(server)"
                   >{{ showOS(server) }}</Badge
                 >
@@ -129,7 +129,7 @@ onUnmounted(() => stop());
                 :style="{ '--primary': `hsl(${colors.cpu.hsl})` }"
               >
                 <div class="flex justify-between text-xs">
-                  <span class="text-muted-foreground flex items-center gap-1"
+                  <span class="flex items-center gap-1 text-muted-foreground"
                     ><Cpu
                       class="h-3 w-3"
                       :style="{ color: colors.cpu.color }"
@@ -149,7 +149,7 @@ onUnmounted(() => stop());
                 :style="{ '--primary': `hsl(${colors.memory.hsl})` }"
               >
                 <div class="flex justify-between text-xs">
-                  <span class="text-muted-foreground flex items-center gap-1"
+                  <span class="flex items-center gap-1 text-muted-foreground"
                     ><Database
                       class="h-3 w-3"
                       :style="{ color: colors.memory.color }"
@@ -170,13 +170,13 @@ onUnmounted(() => stop());
 
               <!-- Load -->
               <div class="grid gap-2 text-xs">
-                <div class="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                <div class="flex items-center gap-2 rounded-md bg-muted/50 p-2">
                   <Activity class="h-3.5 w-3.5 text-muted-foreground" />
                   <div class="flex flex-col">
                     <span class="text-xs text-muted-foreground">{{
                       $t("common.load")
                     }}</span>
-                    <span class="font-medium font-mono">{{
+                    <span class="font-mono font-medium">{{
                       formatLoad({
                         load_one: server.load_one,
                         load_five: server.load_five,
@@ -188,7 +188,7 @@ onUnmounted(() => stop());
               </div>
 
               <!-- Network & Disk -->
-              <div class="grid grid-cols-2 gap-4 pt-2 border-t">
+              <div class="grid grid-cols-2 gap-4 border-t pt-2">
                 <!-- Network -->
                 <div
                   class="flex flex-col gap-1"
@@ -198,13 +198,13 @@ onUnmounted(() => stop());
                   "
                 >
                   <span
-                    class="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider"
+                    class="flex items-center gap-1 text-[10px] tracking-wider text-muted-foreground uppercase"
                     ><NetworkIcon
                       class="h-3 w-3"
                       :style="{ color: colors.network.color }"
                     />{{ $t("common.network") }}</span
                   >
-                  <div class="flex flex-col text-xs font-mono">
+                  <div class="flex flex-col font-mono text-xs">
                     <div class="flex items-center gap-2">
                       <span class="text-muted-foreground">↓</span>
                       <span>{{ showNetworkSpeed(server, "rx") }}</span>
@@ -223,7 +223,7 @@ onUnmounted(() => stop());
                   :style="{ '--primary': `hsl(${colors.disk.hsl})` }"
                 >
                   <span
-                    class="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider"
+                    class="flex items-center gap-1 text-[10px] tracking-wider text-muted-foreground uppercase"
                     ><HardDrive
                       class="h-3 w-3"
                       :style="{ color: colors.disk.color }"
@@ -236,13 +236,13 @@ onUnmounted(() => stop());
                   </div>
                   <Progress
                     :model-value="showDiskPercent(server)"
-                    class="h-1 mt-1"
+                    class="mt-1 h-1"
                   />
                 </div>
               </div>
             </CardContent>
             <CardFooter
-              class="pt-0 pb-3 text-[10px] text-muted-foreground flex justify-between px-6"
+              class="flex justify-between px-6 pt-0 pb-3 text-[10px] text-muted-foreground"
             >
               <span class="font-mono"
                 >ID: {{ server.uuid.substring(0, 8) }}</span

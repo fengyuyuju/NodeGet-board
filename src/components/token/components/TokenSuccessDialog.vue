@@ -20,6 +20,8 @@ const open = defineModel<boolean>("open", { default: false });
 const props = defineProps<{
   tokenKey: string;
   tokenSecret: string;
+  title?: string;
+  description?: string;
 }>();
 
 const { t } = useI18n();
@@ -41,10 +43,15 @@ const handleCopy = async (value: string, successMessage: string) => {
     <DialogContent class="sm:max-w-xl">
       <DialogHeader>
         <DialogTitle>
-          {{ t("dashboard.token.create.createSuccessDialog.title") }}
+          {{
+            props.title ?? t("dashboard.token.create.createSuccessDialog.title")
+          }}
         </DialogTitle>
         <DialogDescription>
-          {{ t("dashboard.token.create.createSuccessDialog.description") }}
+          {{
+            props.description ??
+            t("dashboard.token.create.createSuccessDialog.description")
+          }}
         </DialogDescription>
       </DialogHeader>
 

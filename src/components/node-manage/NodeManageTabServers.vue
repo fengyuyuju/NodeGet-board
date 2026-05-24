@@ -258,7 +258,7 @@ fetchVersion();
         />
       </Button>
       <Button size="sm" @click="addOpen = true">
-        <Plus class="h-4 w-4 mr-1.5" />
+        <Plus class="mr-1.5 h-4 w-4" />
         {{ t("dashboard.servers.addServer") }}
       </Button>
     </div>
@@ -294,7 +294,7 @@ fetchVersion();
               {{ serverInfo[backend.url]?.uuid ?? "--" }}
             </TableCell>
             <TableCell
-              class="font-mono text-xs max-w-[200px] truncate"
+              class="max-w-[200px] truncate font-mono text-xs"
               :title="backend.url"
             >
               {{ backend.url }}
@@ -317,7 +317,7 @@ fetchVersion();
                       <TooltipTrigger as-child>
                         <Badge
                           variant="outline"
-                          class="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 ml-2"
+                          class="ml-2 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
                         >
                           脚本更新
                           <Info data-icon="inline-start" />
@@ -346,13 +346,13 @@ fetchVersion();
                           latestVersion,
                         ) < 0
                       "
-                      class="bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 ml-2"
+                      class="ml-2 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
                       >可更新</Badge
                     >
                     <Badge
                       variant="outline"
                       v-else
-                      class="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 ml-2"
+                      class="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
                       >最新版本</Badge
                     >
                   </template>

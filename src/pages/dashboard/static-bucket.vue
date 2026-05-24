@@ -173,8 +173,8 @@ const handleCreateAndUpload = async (
 </script>
 
 <template>
-  <div class="h-full flex flex-col space-y-4">
-    <h1 class="text-2xl font-bold mb-2">静态资源管理</h1>
+  <div class="flex h-full flex-col space-y-4">
+    <h1 class="mb-2 text-2xl font-bold">静态资源管理</h1>
 
     <StaticBucketTable
       :buckets="staticBucket.buckets.value"

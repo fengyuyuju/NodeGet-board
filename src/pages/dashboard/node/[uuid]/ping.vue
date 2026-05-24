@@ -8,12 +8,12 @@ definePage({
   },
 });
 
-const route = useRoute();
-const uuid = (route.params as { uuid: string }).uuid;
+const route = useRoute("/dashboard/node/[uuid]/ping");
+const uuid = route.params.uuid;
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
+  <div class="flex h-full flex-col">
     <div class="flex-1 overflow-auto rounded-md border bg-card p-6">
       <PingView :uuid="uuid" />
     </div>

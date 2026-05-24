@@ -762,7 +762,7 @@ const formatTime = (ts: number | null) => {
 </script>
 
 <template>
-  <div class="flex flex-col h-[calc(100vh-100px)] space-y-4">
+  <div class="flex h-[calc(100vh-100px)] flex-col space-y-4">
     <div class="flex items-center gap-4">
       <Button
         variant="ghost"
@@ -772,17 +772,17 @@ const formatTime = (ts: number | null) => {
         <ChevronLeft class="h-5 w-5" />
       </Button>
       <div>
-        <h1 class="text-2xl font-semibold flex items-center gap-2">
+        <h1 class="flex items-center gap-2 text-2xl font-semibold">
           {{ worker?.name || "Loading..." }}
           <span v-if="loading" class="inline-block animate-spin"
             ><Loader2 class="h-4 w-4"
           /></span>
         </h1>
-        <p class="text-muted-foreground font-mono text-xs">{{ workerId }}</p>
+        <p class="font-mono text-xs text-muted-foreground">{{ workerId }}</p>
       </div>
     </div>
 
-    <Tabs v-model="activeTab" class="flex-1 flex flex-col min-h-0">
+    <Tabs v-model="activeTab" class="flex min-h-0 flex-1 flex-col">
       <TabsList class="w-fit">
         <TabsTrigger value="overview">{{
           t("dashboard.jsRuntime.tabs.overview")
@@ -798,11 +798,11 @@ const formatTime = (ts: number | null) => {
         }}</TabsTrigger>
       </TabsList>
 
-      <div class="flex-1 mt-4 min-h-0 overflow-auto">
+      <div class="mt-4 min-h-0 flex-1 overflow-auto">
         <TabsContent value="overview" class="m-0">
           <div class="px-1 py-1">
             <div
-              class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground/60 font-mono"
+              class="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs text-muted-foreground/60"
             >
               <div class="flex items-center gap-1.5">
                 <span class="shrink-0"
@@ -834,7 +834,7 @@ const formatTime = (ts: number | null) => {
           <Card class="mt-4 gap-0">
             <CardHeader class="flex flex-row items-center justify-between pb-2">
               <CardTitle
-                class="text-[13px] font-medium text-muted-foreground/50 uppercase tracking-wider"
+                class="text-[13px] font-medium tracking-wider text-muted-foreground/50 uppercase"
                 >README</CardTitle
               >
               <Button
@@ -842,21 +842,21 @@ const formatTime = (ts: number | null) => {
                 variant="outline"
                 @click="openDescriptionEditFun"
               >
-                <FileText class="w-4 h-4 mr-2" />
+                <FileText class="mr-2 h-4 w-4" />
                 编辑描述
               </Button>
             </CardHeader>
             <CardContent class="pt-2 pb-4">
               <div
                 v-if="worker?.description"
-                class="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed"
+                class="prose prose-sm max-w-none text-sm leading-relaxed dark:prose-invert"
                 v-html="renderedDescription"
               ></div>
               <div
                 v-else
-                class="text-muted-foreground text-sm flex flex-col items-center justify-center py-10 bg-muted/20 border border-dashed rounded-lg"
+                class="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/20 py-10 text-sm text-muted-foreground"
               >
-                <FileText class="h-8 w-8 mb-2 opacity-50" />
+                <FileText class="mb-2 h-8 w-8 opacity-50" />
                 <span>无脚本描述</span>
               </div>
             </CardContent>
@@ -865,19 +865,19 @@ const formatTime = (ts: number | null) => {
 
         <TabsContent
           value="content"
-          class="m-0 h-full flex flex-col min-h-0 relative"
+          class="relative m-0 flex h-full min-h-0 flex-col"
         >
           <div
             v-if="activeTab === 'content' && isActionPending"
             class="absolute inset-0 z-[100] cursor-wait bg-background/5"
           ></div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full min-h-0">
+          <div class="grid h-full min-h-0 grid-cols-1 gap-4 lg:grid-cols-2">
             <!-- Left: Editor -->
             <div
-              class="flex flex-col min-h-0 border rounded-lg overflow-hidden bg-card"
+              class="flex min-h-0 flex-col overflow-hidden rounded-lg border bg-card"
             >
-              <div class="flex-1 min-h-0 overflow-hidden">
+              <div class="min-h-0 flex-1 overflow-hidden">
                 <Codemirror
                   v-model="content"
                   :extensions="extensions"
@@ -888,7 +888,7 @@ const formatTime = (ts: number | null) => {
             </div>
 
             <!-- Right: Controls & Result -->
-            <div class="flex flex-col gap-4 min-h-0 relative">
+            <div class="relative flex min-h-0 flex-col gap-4">
               <!-- Mode Tabs & Top Actions -->
               <div class="flex items-center justify-between gap-4">
                 <Tabs v-model="activeRunMode" class="w-fit">
@@ -928,7 +928,7 @@ const formatTime = (ts: number | null) => {
 
               <!-- Content Area based on activeRunMode -->
               <div
-                class="flex-1 flex flex-col gap-4 min-h-0 overflow-auto pr-1"
+                class="flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1"
               >
                 <!-- Call / Cron Mode UI -->
                 <template
@@ -936,14 +936,14 @@ const formatTime = (ts: number | null) => {
                 >
                   <Collapsible v-model:open="isConfigOpen">
                     <Tabs v-model="activeEditorTab" class="space-y-4">
-                      <div class="flex items-center justify-between group">
+                      <div class="group flex items-center justify-between">
                         <div class="flex-1">
                           <TabsList class="grid w-full grid-cols-2">
                             <TabsTrigger value="env" class="relative">
                               {{ t("dashboard.jsRuntime.editor.env") }}
                               <span
                                 v-if="isEnvDirty"
-                                class="absolute -top-1 -right-1 text-orange-500 font-bold"
+                                class="absolute -top-1 -right-1 font-bold text-orange-500"
                                 >*</span
                               >
                             </TabsTrigger>
@@ -956,7 +956,7 @@ const formatTime = (ts: number | null) => {
                           <Button
                             variant="ghost"
                             size="icon"
-                            class="h-8 w-8 ml-2 shrink-0"
+                            class="ml-2 h-8 w-8 shrink-0"
                           >
                             <ChevronDown
                               class="h-4 w-4 transition-transform duration-200"
@@ -969,7 +969,7 @@ const formatTime = (ts: number | null) => {
                       <CollapsibleContent class="space-y-4">
                         <TabsContent
                           value="params"
-                          class="m-0 h-32 border rounded-md overflow-hidden bg-card"
+                          class="m-0 h-32 overflow-hidden rounded-md border bg-card"
                         >
                           <Codemirror
                             v-model="runParams"
@@ -980,7 +980,7 @@ const formatTime = (ts: number | null) => {
                         </TabsContent>
                         <TabsContent
                           value="env"
-                          class="m-0 min-h-32 border rounded-md overflow-hidden bg-card flex flex-col"
+                          class="m-0 flex min-h-32 flex-col overflow-hidden rounded-md border bg-card"
                         >
                           <div class="flex-1 overflow-auto p-2">
                             <Table>
@@ -999,23 +999,23 @@ const formatTime = (ts: number | null) => {
                                 <TableRow
                                   v-for="(item, index) in tempEnvVars"
                                   :key="index"
-                                  class="hover:bg-transparent border-none"
+                                  class="border-none hover:bg-transparent"
                                 >
-                                  <TableCell class="p-1 h-auto">
+                                  <TableCell class="h-auto p-1">
                                     <Input
                                       v-model="item.key"
-                                      class="h-7 text-xs font-mono"
+                                      class="h-7 font-mono text-xs"
                                       placeholder="Key"
                                     />
                                   </TableCell>
-                                  <TableCell class="p-1 h-auto">
+                                  <TableCell class="h-auto p-1">
                                     <Input
                                       v-model="item.value"
-                                      class="h-7 text-xs font-mono"
+                                      class="h-7 font-mono text-xs"
                                       placeholder="Value"
                                     />
                                   </TableCell>
-                                  <TableCell class="p-1 h-auto text-center">
+                                  <TableCell class="h-auto p-1 text-center">
                                     <Button
                                       v-if="index !== tempEnvVars.length - 1"
                                       variant="ghost"
@@ -1041,11 +1041,11 @@ const formatTime = (ts: number | null) => {
                   <div class="space-y-2">
                     <!-- URL Display -->
                     <div
-                      class="p-2 bg-muted/40 rounded-lg flex items-center gap-2 text-[13px] font-mono overflow-hidden"
+                      class="flex items-center gap-2 overflow-hidden rounded-lg bg-muted/40 p-2 font-mono text-[13px]"
                     >
                       <Select v-model="httpSimulation.method">
                         <SelectTrigger
-                          class="h-6 w-auto px-1.5 py-0 gap-0.5 [&>svg]:ml-0 [&>svg]:h-3 [&>svg]:w-3 text-[10px] font-mono shrink-0 bg-background border-muted"
+                          class="h-6 w-auto shrink-0 gap-0.5 border-muted bg-background px-1.5 py-0 font-mono text-[10px] [&>svg]:ml-0 [&>svg]:h-3 [&>svg]:w-3"
                         >
                           <SelectValue />
                         </SelectTrigger>
@@ -1065,9 +1065,9 @@ const formatTime = (ts: number | null) => {
                         </SelectContent>
                       </Select>
                       <div
-                        class="flex-1 flex min-w-0 overflow-hidden text-muted-foreground mx-1"
+                        class="mx-1 flex min-w-0 flex-1 overflow-hidden text-muted-foreground"
                       >
-                        <span class="truncate opacity-70 shrink min-w-[40px]">{{
+                        <span class="min-w-[40px] shrink truncate opacity-70">{{
                           httpBaseUrl
                         }}</span>
                         <span class="shrink-0"
@@ -1077,18 +1077,18 @@ const formatTime = (ts: number | null) => {
                       <Input
                         v-model="httpSimulation.suffix"
                         placeholder="path suffix"
-                        class="h-7 px-2 font-mono text-[12px] w-[130px] shrink-0"
+                        class="h-7 w-[130px] shrink-0 px-2 font-mono text-[12px]"
                       />
                     </div>
                     <p
                       v-if="!worker?.route"
-                      class="text-xs text-orange-500 px-1"
+                      class="px-1 text-xs text-orange-500"
                     >
                       {{ t("dashboard.jsRuntime.editor.noRoute") }}
                     </p>
 
                     <div
-                      class="w-full space-y-3 border rounded-md p-3 bg-card shadow-sm mt-0"
+                      class="mt-0 w-full space-y-3 rounded-md border bg-card p-3 shadow-sm"
                     >
                       <!-- Headers Section -->
                       <div class="space-y-2">
@@ -1099,10 +1099,10 @@ const formatTime = (ts: number | null) => {
                           <Button
                             variant="link"
                             size="sm"
-                            class="h-6 text-xs text-primary p-0"
+                            class="h-6 p-0 text-xs text-primary"
                             @click="addHttpHeaderFun"
                           >
-                            <Plus class="h-3 w-3 mr-1" />
+                            <Plus class="mr-1 h-3 w-3" />
                             {{ t("dashboard.jsRuntime.editor.addHeader") }}
                           </Button>
                         </div>
@@ -1138,7 +1138,7 @@ const formatTime = (ts: number | null) => {
                           {{ t("dashboard.jsRuntime.editor.body") }}
                         </div>
                         <div
-                          class="h-32 border rounded-md overflow-hidden bg-background"
+                          class="h-32 overflow-hidden rounded-md border bg-background"
                         >
                           <Codemirror
                             v-model="httpSimulation.body"
@@ -1154,17 +1154,17 @@ const formatTime = (ts: number | null) => {
 
                 <!-- Preview Mode UI -->
                 <template v-else-if="activeRunMode === 'preview'">
-                  <div class="space-y-4 flex flex-col h-full min-h-0">
+                  <div class="flex h-full min-h-0 flex-col space-y-4">
                     <div
-                      class="p-3 bg-muted/40 rounded-lg flex items-center gap-2 text-[13px] font-mono overflow-auto"
+                      class="flex items-center gap-2 overflow-auto rounded-lg bg-muted/40 p-3 font-mono text-[13px]"
                     >
                       <Globe
                         class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       />
                       <div
-                        class="flex-1 flex min-w-0 overflow-hidden text-muted-foreground mx-1"
+                        class="mx-1 flex min-w-0 flex-1 overflow-hidden text-muted-foreground"
                       >
-                        <span class="truncate opacity-70 shrink min-w-[40px]">{{
+                        <span class="min-w-[40px] shrink truncate opacity-70">{{
                           wsBaseUrl
                         }}</span>
                         <span class="shrink-0"
@@ -1174,12 +1174,12 @@ const formatTime = (ts: number | null) => {
                       <Input
                         v-model="httpSimulation.suffix"
                         placeholder="path suffix"
-                        class="h-7 px-2 font-mono text-[12px] w-[130px] shrink-0"
+                        class="h-7 w-[130px] shrink-0 px-2 font-mono text-[12px]"
                       />
                       <Button
                         variant="ghost"
                         size="icon"
-                        class="h-7 w-7 shrink-0 ml-auto"
+                        class="ml-auto h-7 w-7 shrink-0"
                         @click="openPreviewNewWindowFun"
                         title="在新窗口打开"
                       >
@@ -1187,9 +1187,9 @@ const formatTime = (ts: number | null) => {
                       </Button>
                     </div>
 
-                    <div class="flex items-center justify-between px-1 mt-2">
+                    <div class="mt-2 flex items-center justify-between px-1">
                       <h3 class="text-sm font-semibold">预览 (Preview)</h3>
-                      <div class="flex items-center gap-2 shrink-0">
+                      <div class="flex shrink-0 items-center gap-2">
                         <Button
                           size="sm"
                           @click="runWorkerFun(false)"
@@ -1219,11 +1219,11 @@ const formatTime = (ts: number | null) => {
                     </div>
 
                     <div
-                      class="flex-1 border rounded-lg bg-white min-h-[300px] relative overflow-hidden"
+                      class="relative min-h-[300px] flex-1 overflow-hidden rounded-lg border bg-white"
                     >
                       <div
                         v-if="!worker?.route"
-                        class="flex items-center justify-center h-full text-muted-foreground text-sm"
+                        class="flex h-full items-center justify-center text-sm text-muted-foreground"
                       >
                         {{ t("dashboard.jsRuntime.editor.noRoute") }}
                       </div>
@@ -1232,7 +1232,7 @@ const formatTime = (ts: number | null) => {
                         :key="iframeKey"
                         :src="`${httpBaseUrl}/worker-route/${worker?.route}/${httpSimulation.suffix}`"
                         sandbox="allow-scripts allow-same-origin"
-                        class="w-full h-full border-0"
+                        class="h-full w-full border-0"
                       ></iframe>
                     </div>
                   </div>
@@ -1241,18 +1241,18 @@ const formatTime = (ts: number | null) => {
                 <!-- Common Result Area (for all modes except preview which has iframe) -->
                 <div
                   v-if="activeRunMode !== 'preview'"
-                  class="flex flex-col gap-2 shrink-0"
+                  class="flex shrink-0 flex-col gap-2"
                 >
                   <div class="flex items-center justify-between px-1">
                     <h3 class="text-sm font-semibold">
                       {{ t("dashboard.jsRuntime.editor.result") }}
                     </h3>
-                    <div class="flex items-center gap-2 scale-90 origin-right">
+                    <div class="flex origin-right scale-90 items-center gap-2">
                       <Button
                         v-if="activeRunMode === 'http' && runResult"
                         variant="ghost"
                         size="sm"
-                        class="h-8 px-3 text-xs border"
+                        class="h-8 border px-3 text-xs"
                         @click="httpResultOpen = !httpResultOpen"
                       >
                         {{ !httpResultOpen ? "展开结果" : "折叠结果" }}
@@ -1287,11 +1287,11 @@ const formatTime = (ts: number | null) => {
                   </div>
 
                   <div
-                    class="border rounded-lg bg-card overflow-hidden relative"
+                    class="relative overflow-hidden rounded-lg border bg-card"
                   >
                     <div
                       v-if="runLoading"
-                      class="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex items-center justify-center"
+                      class="absolute inset-0 z-10 flex items-center justify-center bg-background/40 backdrop-blur-[1px]"
                     >
                       <Loader2
                         class="h-6 w-6 animate-spin text-muted-foreground"
@@ -1301,23 +1301,23 @@ const formatTime = (ts: number | null) => {
                     <Collapsible v-model:open="httpResultOpen">
                       <CollapsibleContent
                         force-mount
-                        class="data-[state=closed]:h-0 overflow-hidden transition-all"
+                        class="overflow-hidden transition-all data-[state=closed]:h-0"
                       >
                         <template v-if="parsedHttpResult">
                           <!-- Part 1: Status Code -->
                           <div
-                            class="flex items-center gap-2 px-3 py-2 border-b bg-muted/5"
+                            class="flex items-center gap-2 border-b bg-muted/5 px-3 py-2"
                           >
                             <div
                               :class="[
-                                'w-2 h-2 rounded-full',
+                                'h-2 w-2 rounded-full',
                                 parsedHttpResult.status >= 200 &&
                                 parsedHttpResult.status < 300
                                   ? 'bg-green-500'
                                   : 'bg-orange-500',
                               ]"
                             ></div>
-                            <span class="text-sm font-mono font-bold">{{
+                            <span class="font-mono text-sm font-bold">{{
                               parsedHttpResult.status
                             }}</span>
                           </div>
@@ -1326,7 +1326,7 @@ const formatTime = (ts: number | null) => {
                           <div class="border-b">
                             <button
                               @click="httpHeadersOpen = !httpHeadersOpen"
-                              class="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold text-muted-foreground hover:bg-muted/30 transition-colors uppercase tracking-tight"
+                              class="flex w-full items-center justify-between px-3 py-1.5 text-[10px] font-bold tracking-tight text-muted-foreground uppercase transition-colors hover:bg-muted/30"
                             >
                               <span>{{
                                 t("dashboard.jsRuntime.editor.responseHeaders")
@@ -1340,10 +1340,10 @@ const formatTime = (ts: number | null) => {
                             </button>
                             <div
                               v-show="httpHeadersOpen"
-                              class="px-3 py-2 bg-muted/10 border-t border-dashed"
+                              class="border-t border-dashed bg-muted/10 px-3 py-2"
                             >
                               <pre
-                                class="text-[11px] font-mono whitespace-pre-wrap break-all text-foreground/80 leading-relaxed"
+                                class="font-mono text-[11px] leading-relaxed break-all whitespace-pre-wrap text-foreground/80"
                                 >{{ parsedHttpResult.headersText }}</pre
                               >
                             </div>
@@ -1351,7 +1351,7 @@ const formatTime = (ts: number | null) => {
 
                           <!-- Part 3: Response Body -->
                           <div
-                            class="relative p-1 overflow-hidden"
+                            class="relative overflow-hidden p-1"
                             :class="
                               parsedHttpResult.body.isImage ||
                               parsedHttpResult.body.isHtml
@@ -1361,7 +1361,7 @@ const formatTime = (ts: number | null) => {
                           >
                             <div
                               v-if="parsedHttpResult.body.isImage"
-                              class="w-full h-full flex items-center justify-center bg-muted/20 border rounded-sm overflow-hidden"
+                              class="flex h-full w-full items-center justify-center overflow-hidden rounded-sm border bg-muted/20"
                             >
                               <img
                                 :src="parsedHttpResult.body.url"
@@ -1371,14 +1371,14 @@ const formatTime = (ts: number | null) => {
                             <iframe
                               v-else-if="parsedHttpResult.body.isHtml"
                               :srcdoc="parsedHttpResult.body.content"
-                              class="w-full h-full border rounded-sm bg-white"
+                              class="h-full w-full rounded-sm border bg-white"
                               sandbox="allow-scripts allow-same-origin"
                             ></iframe>
                             <Codemirror
                               v-else-if="parsedHttpResult.body.isText"
                               :model-value="parsedHttpResult.body.content"
                               :extensions="jsonExtensions"
-                              class="text-[12px] w-full h-full"
+                              class="h-full w-full text-[12px]"
                               disabled
                             />
                           </div>
@@ -1404,9 +1404,9 @@ const formatTime = (ts: number | null) => {
 
                     <div
                       v-if="!runResult && !runLoading"
-                      class="h-[200px] flex flex-col items-center justify-center text-muted-foreground bg-muted/10 opacity-60"
+                      class="flex h-[200px] flex-col items-center justify-center bg-muted/10 text-muted-foreground opacity-60"
                     >
-                      <Inbox class="h-10 w-10 mb-2 opacity-20" />
+                      <Inbox class="mb-2 h-10 w-10 opacity-20" />
                       <p class="text-xs">未执行，请先执行后查看结果</p>
                     </div>
                   </div>
@@ -1417,18 +1417,18 @@ const formatTime = (ts: number | null) => {
         </TabsContent>
         <TabsContent
           value="logs"
-          class="m-0 h-full flex flex-col min-h-0 space-y-4 pt-1"
+          class="m-0 flex h-full min-h-0 flex-col space-y-4 pt-1"
         >
           <div
-            class="bg-card border rounded-xl shadow-sm p-4 transition-all shrink-0"
+            class="shrink-0 rounded-xl border bg-card p-4 shadow-sm transition-all"
           >
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div class="space-y-1.5">
                 <label class="text-sm font-medium text-foreground/80">{{
                   t("dashboard.jsRuntime.logs.runType")
                 }}</label>
                 <Select v-model="logFilter.runType">
-                  <SelectTrigger class="bg-background/50 h-9 w-full"
+                  <SelectTrigger class="h-9 w-full bg-background/50"
                     ><SelectValue
                   /></SelectTrigger>
                   <SelectContent>
@@ -1443,7 +1443,7 @@ const formatTime = (ts: number | null) => {
                   t("dashboard.jsRuntime.logs.status", "Status")
                 }}</label>
                 <Select v-model="logFilter.status">
-                  <SelectTrigger class="bg-background/50 h-9 w-full"
+                  <SelectTrigger class="h-9 w-full bg-background/50"
                     ><SelectValue
                   /></SelectTrigger>
                   <SelectContent>
@@ -1474,7 +1474,7 @@ const formatTime = (ts: number | null) => {
                   type="number"
                   min="1"
                   max="500"
-                  class="bg-background/50 h-9"
+                  class="h-9 bg-background/50"
                   @update:model-value="
                     logFilter.limit = Math.max(1, Number($event) || 20)
                   "
@@ -1488,7 +1488,7 @@ const formatTime = (ts: number | null) => {
                   :model-value="logFilter.latestOnly ? 'yes' : 'no'"
                   @update:model-value="logFilter.latestOnly = $event === 'yes'"
                 >
-                  <SelectTrigger class="bg-background/50 h-9 w-full"
+                  <SelectTrigger class="h-9 w-full bg-background/50"
                     ><SelectValue
                   /></SelectTrigger>
                   <SelectContent>
@@ -1509,12 +1509,12 @@ const formatTime = (ts: number | null) => {
                   v-model="logFilter.id"
                   type="number"
                   min="1"
-                  class="bg-background/50 h-9"
+                  class="h-9 bg-background/50"
                 />
               </div>
 
               <div
-                class="sm:col-span-2 lg:col-span-4 flex items-end justify-end gap-3 w-full"
+                class="flex w-full items-end justify-end gap-3 sm:col-span-2 lg:col-span-4"
               >
                 <Button
                   :disabled="logsLoading"
@@ -1542,9 +1542,9 @@ const formatTime = (ts: number | null) => {
           </div>
 
           <div
-            class="flex-1 rounded-xl border bg-card text-card-foreground shadow-sm flex flex-col min-h-0 overflow-hidden relative"
+            class="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm"
           >
-            <div class="flex-1 min-h-0 overflow-auto">
+            <div class="min-h-0 flex-1 overflow-auto">
               <Table>
                 <TableHeader class="bg-muted/30">
                   <TableRow class="hover:bg-transparent">
@@ -1572,7 +1572,7 @@ const formatTime = (ts: number | null) => {
                     <TableHead class="font-medium whitespace-nowrap">{{
                       t("dashboard.jsRuntime.logs.message", "Message")
                     }}</TableHead>
-                    <TableHead class="w-[150px] font-medium text-right pr-6">{{
+                    <TableHead class="w-[150px] pr-6 text-right font-medium">{{
                       t("dashboard.jsRuntime.logs.actions", "Actions")
                     }}</TableHead>
                   </TableRow>
@@ -1584,7 +1584,7 @@ const formatTime = (ts: number | null) => {
                         class="flex flex-col items-center justify-center space-y-3"
                       >
                         <Loader2
-                          class="w-6 h-6 animate-spin text-muted-foreground/50"
+                          class="h-6 w-6 animate-spin text-muted-foreground/50"
                         />
                         <span class="text-sm font-medium">{{
                           t("common.loading")
@@ -1595,12 +1595,12 @@ const formatTime = (ts: number | null) => {
                   <TableRow v-else-if="logs.length === 0">
                     <TableCell colspan="5" class="h-[300px] text-center">
                       <div
-                        class="flex flex-col items-center justify-center text-muted-foreground space-y-3"
+                        class="flex flex-col items-center justify-center space-y-3 text-muted-foreground"
                       >
                         <div
-                          class="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center"
+                          class="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50"
                         >
-                          <Inbox class="w-6 h-6 text-muted-foreground/60" />
+                          <Inbox class="h-6 w-6 text-muted-foreground/60" />
                         </div>
                         <p class="text-sm">
                           {{ t("common.noData", "No Data") }}
@@ -1610,10 +1610,10 @@ const formatTime = (ts: number | null) => {
                   </TableRow>
                   <TableRow v-for="log in logs" :key="log.id">
                     <TableCell
-                      class="font-mono text-xs text-foreground/80 py-3"
+                      class="py-3 font-mono text-xs text-foreground/80"
                       >{{ log.id }}</TableCell
                     >
-                    <TableCell class="whitespace-nowrap py-3">
+                    <TableCell class="py-3 whitespace-nowrap">
                       <div
                         class="flex items-center gap-2 text-sm text-foreground/90"
                       >
@@ -1635,7 +1635,7 @@ const formatTime = (ts: number | null) => {
                     </TableCell>
                     <TableCell class="py-3">
                       <p
-                        class="text-sm truncate max-w-[200px] md:max-w-[400px] text-foreground/80"
+                        class="max-w-[200px] truncate text-sm text-foreground/80 md:max-w-[400px]"
                         :title="
                           log.error_message ||
                           t('dashboard.jsRuntime.logs.success', 'Success')
@@ -1647,7 +1647,7 @@ const formatTime = (ts: number | null) => {
                         }}
                       </p>
                     </TableCell>
-                    <TableCell class="text-right pr-6 py-3">
+                    <TableCell class="py-3 pr-6 text-right">
                       <div class="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
@@ -1678,7 +1678,7 @@ const formatTime = (ts: number | null) => {
 
             <div
               v-if="totalPages > 1 || allLogs.length > 0"
-              class="border-t bg-muted/10 px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+              class="flex flex-col gap-3 border-t bg-muted/10 px-4 py-3 md:flex-row md:items-center md:justify-between"
             >
               <div
                 class="flex items-center gap-3 text-sm text-muted-foreground"
@@ -1718,22 +1718,22 @@ const formatTime = (ts: number | null) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  class="h-8 px-3 shadow-sm bg-background transition-colors hover:bg-muted"
+                  class="h-8 bg-background px-3 shadow-sm transition-colors hover:bg-muted"
                   :disabled="currentPage <= 1 || logsLoading"
                   @click="currentPage--"
                 >
-                  <ChevronLeft class="w-4 h-4 mr-1" />
+                  <ChevronLeft class="mr-1 h-4 w-4" />
                   {{ t("common.previous") }}
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  class="h-8 px-3 shadow-sm bg-background transition-colors hover:bg-muted"
+                  class="h-8 bg-background px-3 shadow-sm transition-colors hover:bg-muted"
                   :disabled="currentPage >= totalPages || logsLoading"
                   @click="currentPage++"
                 >
                   {{ t("common.next") }}
-                  <ChevronRight class="w-4 h-4 ml-1" />
+                  <ChevronRight class="ml-1 h-4 w-4" />
                 </Button>
               </div>
             </div>
@@ -1752,7 +1752,7 @@ const formatTime = (ts: number | null) => {
                 <div
                   v-for="(item, index) in envVars"
                   :key="index"
-                  class="flex gap-4 items-center"
+                  class="flex items-center gap-4"
                 >
                   <Input
                     v-model="item.key"
@@ -1785,7 +1785,7 @@ const formatTime = (ts: number | null) => {
                 }}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-4">
                   <Input
                     v-model="workerRoute"
                     :placeholder="t('dashboard.jsRuntime.settings.route')"
@@ -1802,7 +1802,7 @@ const formatTime = (ts: number | null) => {
                 }}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-4">
                   <Input
                     v-model="cleanTime"
                     :placeholder="t('dashboard.jsRuntime.settings.cleanTime')"
@@ -1819,7 +1819,7 @@ const formatTime = (ts: number | null) => {
                 <CardTitle>{{ t("max_run_time") }}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-4">
                   <Input
                     v-model="max_run_time"
                     :placeholder="t('max_run_time')"
@@ -1834,7 +1834,7 @@ const formatTime = (ts: number | null) => {
                 <CardTitle>{{ t("max_stack_size") }}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-4">
                   <Input
                     v-model="max_stack_size"
                     :placeholder="t('max_stack_size')"
@@ -1849,7 +1849,7 @@ const formatTime = (ts: number | null) => {
                 <CardTitle>{{ t("max_heap_size") }}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="flex gap-4 items-center">
+                <div class="flex items-center gap-4">
                   <Input
                     v-model="max_heap_size"
                     :placeholder="t('max_heap_size')"
@@ -1878,17 +1878,17 @@ const formatTime = (ts: number | null) => {
     </Tabs>
 
     <Dialog v-model:open="logDetailOpen">
-      <DialogContent class="max-w-3xl max-h-[80vh] flex flex-col">
+      <DialogContent class="flex max-h-[80vh] max-w-3xl flex-col">
         <DialogHeader>
           <DialogTitle>{{
             t("dashboard.jsRuntime.logs.detailTitle", "Log Detail")
           }}</DialogTitle>
           <DialogDescription> ID: {{ currentLog?.id }} </DialogDescription>
         </DialogHeader>
-        <div class="flex-1 p-4 border rounded-md min-h-0 overflow-auto">
+        <div class="min-h-0 flex-1 overflow-auto rounded-md border p-4">
           <div class="space-y-4">
             <div>
-              <h4 class="font-medium mb-2">Params</h4>
+              <h4 class="mb-2 font-medium">Params</h4>
               <div class="h-48">
                 <Codemirror
                   :model-value="
@@ -1897,14 +1897,14 @@ const formatTime = (ts: number | null) => {
                       : '{}'
                   "
                   :extensions="jsonExtensions"
-                  class="text-[12px] border rounded h-full"
+                  class="h-full rounded border text-[12px]"
                   :style="{ height: '100%' }"
                   disabled
                 />
               </div>
             </div>
             <div>
-              <h4 class="font-medium mb-2">Result</h4>
+              <h4 class="mb-2 font-medium">Result</h4>
               <div class="h-48">
                 <Codemirror
                   :model-value="
@@ -1913,16 +1913,16 @@ const formatTime = (ts: number | null) => {
                       : 'null'
                   "
                   :extensions="jsonExtensions"
-                  class="text-[12px] border rounded h-full"
+                  class="h-full rounded border text-[12px]"
                   :style="{ height: '100%' }"
                   disabled
                 />
               </div>
             </div>
             <div v-if="currentLog?.error_message">
-              <h4 class="font-medium mb-2 text-destructive">Error</h4>
+              <h4 class="mb-2 font-medium text-destructive">Error</h4>
               <pre
-                class="p-2 border border-destructive/20 bg-destructive/10 text-destructive rounded overflow-auto text-sm"
+                class="overflow-auto rounded border border-destructive/20 bg-destructive/10 p-2 text-sm text-destructive"
                 >{{ currentLog.error_message }}</pre
               >
             </div>
@@ -1943,7 +1943,7 @@ const formatTime = (ts: number | null) => {
       </DialogHeader>
 
       <div class="space-y-4 py-4">
-        <div class="flex flex-col min-h-0 border rounded-lg bg-card">
+        <div class="flex min-h-0 flex-col rounded-lg border bg-card">
           <Codemirror
             v-model="descriptionEditText"
             :extensions="[]"
@@ -1952,7 +1952,7 @@ const formatTime = (ts: number | null) => {
         </div>
       </div>
 
-      <div class="flex justify-end gap-3 pt-4 border-t mt-2">
+      <div class="mt-2 flex justify-end gap-3 border-t pt-4">
         <Button variant="outline" @click="descriptionEditOpen = false"
           >取消</Button
         >

@@ -69,7 +69,7 @@ const copyText = (text: string) => {
       <div class="flex-1 space-y-4 overflow-y-auto py-2 pr-1">
         <qrcode :text="shareLink" class="flex w-full justify-center"></qrcode>
         <div class="space-y-1.5 wrap-break-word">
-          <code class="px-1 text-sm font-mono">{{ shareLink }}</code>
+          <code class="px-1 font-mono text-sm">{{ shareLink }}</code>
         </div>
       </div>
       <DialogFooter>

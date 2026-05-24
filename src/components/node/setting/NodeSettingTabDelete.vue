@@ -187,11 +187,11 @@ async function handleDelete() {
       <h2 class="text-lg font-semibold">
         {{ $t("dashboard.node.delete.title") }}
       </h2>
-      <p class="text-sm text-muted-foreground mt-1">
+      <p class="mt-1 text-sm text-muted-foreground">
         {{ $t("dashboard.node.delete.desc") }}
       </p>
       <ul
-        class="mt-3 space-y-1 list-disc list-inside text-sm text-muted-foreground"
+        class="mt-3 list-inside list-disc space-y-1 text-sm text-muted-foreground"
       >
         <li>{{ $t("dashboard.node.delete.step1") }}</li>
         <li>{{ $t("dashboard.node.delete.step2") }}</li>
@@ -233,7 +233,7 @@ async function handleDelete() {
               />
               <span
                 v-else
-                class="h-4 w-4 rounded-full border border-muted-foreground/30 inline-block"
+                class="inline-block h-4 w-4 rounded-full border border-muted-foreground/30"
               />
               <span
                 :class="

@@ -9,7 +9,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useThemeStore } from "@/stores/theme";
+import { useSystemSettingsStore } from "@/stores/systemSettings";
 import {
   PALETTES,
   COLOR_THEME_KEYS,
@@ -25,6 +28,7 @@ definePage({
 
 const { t } = useI18n();
 const themeStore = useThemeStore();
+const systemSettingsStore = useSystemSettingsStore();
 
 const swatches = computed(() =>
   COLOR_THEME_KEYS.filter((n) => n !== "custom").map((name) => ({
@@ -156,6 +160,32 @@ const onCustomTriggerClick = () => {
             />
           </PopoverContent>
         </Popover>
+      </div>
+    </section>
+
+    <section class="space-y-3">
+      <div>
+        <h2 class="text-sm font-semibold">RPC 调试面板</h2>
+        <p class="text-xs text-muted-foreground mt-0.5">
+          控制是否记录 WebSocket RPC 调试数据。
+        </p>
+      </div>
+
+      <div
+        class="flex max-w-xl items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3"
+      >
+        <div class="min-w-0 space-y-1">
+          <Label for="rpc-debug-panel-switch" class="text-sm">
+            RPC 调试面板
+          </Label>
+          <p class="text-xs leading-5 text-muted-foreground">
+            开启后会处理并记录 RPC 调试数据，关闭时跳过调试数据处理。
+          </p>
+        </div>
+        <Switch
+          id="rpc-debug-panel-switch"
+          v-model:modelValue="systemSettingsStore.config.rpcDebugPanelEnabled"
+        />
       </div>
     </section>
   </div>

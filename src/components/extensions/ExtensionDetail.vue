@@ -504,7 +504,7 @@ const ExtensionFileNode = defineComponent({
 </script>
 
 <template>
-  <Tabs v-model="activeTab" class="flex flex-col flex-1 min-h-0">
+  <Tabs v-model="activeTab" class="flex min-h-0 flex-1 flex-col">
     <TabsList class="mb-4 shrink-0 self-start">
       <TabsTrigger value="overview">概览</TabsTrigger>
       <TabsTrigger value="files">文件</TabsTrigger>
@@ -512,20 +512,20 @@ const ExtensionFileNode = defineComponent({
     </TabsList>
 
     <!-- ── 概览 ── -->
-    <TabsContent value="overview" class="flex-1 min-h-0 overflow-y-auto">
-      <div class="rounded-lg border p-4 space-y-4">
+    <TabsContent value="overview" class="min-h-0 flex-1 overflow-y-auto">
+      <div class="space-y-4 rounded-lg border p-4">
         <!-- 基本字段 -->
         <div class="space-y-2 text-sm">
           <div class="flex gap-2">
-            <span class="text-muted-foreground w-12 shrink-0">名称</span>
+            <span class="w-12 shrink-0 text-muted-foreground">名称</span>
             <span class="font-medium">{{ extension.app.name }}</span>
           </div>
           <div class="flex gap-2">
-            <span class="text-muted-foreground w-12 shrink-0">ID</span>
-            <span class="font-mono text-xs truncate">{{ extension.id }}</span>
+            <span class="w-12 shrink-0 text-muted-foreground">ID</span>
+            <span class="truncate font-mono text-xs">{{ extension.id }}</span>
           </div>
           <div class="flex gap-2">
-            <span class="text-muted-foreground w-12 shrink-0">描述</span>
+            <span class="w-12 shrink-0 text-muted-foreground">描述</span>
             <span>{{ extension.app.description || "—" }}</span>
           </div>
           <div class="flex gap-4">
@@ -546,12 +546,12 @@ const ExtensionFileNode = defineComponent({
           </div>
           <div v-if="extension.app.routes?.length">
             <span class="text-muted-foreground">前端路由</span>
-            <div class="flex flex-wrap gap-2 mt-1.5 ml-0.5">
+            <div class="mt-1.5 ml-0.5 flex flex-wrap gap-2">
               <template v-for="route in extension.app.routes" :key="route.name">
                 <!-- global 路由：直接跳转 -->
                 <button
                   v-if="route.type === 'global'"
-                  class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-mono text-primary border-primary/30 hover:bg-muted transition-colors"
+                  class="inline-flex items-center gap-1.5 rounded-md border border-primary/30 px-2 py-1 font-mono text-xs text-primary transition-colors hover:bg-muted"
                   @click="navigateRoute(route.name, route.type)"
                 >
                   {{ route.name }}
@@ -571,7 +571,7 @@ const ExtensionFileNode = defineComponent({
                 >
                   <PopoverTrigger as-child>
                     <button
-                      class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-mono text-muted-foreground border-border hover:bg-muted transition-colors"
+                      class="inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 font-mono text-xs text-muted-foreground transition-colors hover:bg-muted"
                       @click="navigateRoute(route.name, route.type)"
                     >
                       {{ route.name }}
@@ -580,21 +580,21 @@ const ExtensionFileNode = defineComponent({
                     </button>
                   </PopoverTrigger>
                   <PopoverContent class="w-64 p-2">
-                    <p class="text-xs text-muted-foreground mb-2 px-1">
+                    <p class="mb-2 px-1 text-xs text-muted-foreground">
                       选择节点
                     </p>
-                    <div class="space-y-0.5 max-h-48 overflow-y-auto">
+                    <div class="max-h-48 space-y-0.5 overflow-y-auto">
                       <button
                         v-for="uuid in nodeUuids"
                         :key="uuid"
-                        class="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted transition-colors"
+                        class="w-full rounded px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted"
                         @click="pickNode(uuid)"
                       >
                         <span class="font-medium">{{
                           nodeNames[uuid] || "未命名节点"
                         }}</span>
                         <span
-                          class="block font-mono text-[10px] text-muted-foreground truncate"
+                          class="block truncate font-mono text-[10px] text-muted-foreground"
                           >{{ uuid }}</span
                         >
                       </button>
@@ -609,7 +609,7 @@ const ExtensionFileNode = defineComponent({
         <!-- README -->
         <div
           v-if="extension.readme"
-          class="rounded border p-3 prose prose-sm prose-neutral dark:prose-invert max-w-none text-sm overflow-y-auto"
+          class="prose prose-sm max-w-none overflow-y-auto rounded border p-3 text-sm prose-neutral dark:prose-invert"
           v-html="renderMarkdown(extension.readme)"
         />
         <div
@@ -622,11 +622,11 @@ const ExtensionFileNode = defineComponent({
     </TabsContent>
 
     <!-- ── 文件 ── -->
-    <TabsContent value="files" class="flex-1 min-h-0">
-      <div class="grid grid-cols-3 gap-4 h-full">
-        <div class="col-span-1 rounded-lg border p-3 flex flex-col min-h-0">
-          <p class="text-xs text-muted-foreground mb-2 shrink-0">普通文件</p>
-          <div class="flex-1 overflow-y-auto space-y-0.5">
+    <TabsContent value="files" class="min-h-0 flex-1">
+      <div class="grid h-full grid-cols-3 gap-4">
+        <div class="col-span-1 flex min-h-0 flex-col rounded-lg border p-3">
+          <p class="mb-2 shrink-0 text-xs text-muted-foreground">普通文件</p>
+          <div class="flex-1 space-y-0.5 overflow-y-auto">
             <component
               :is="ExtensionFileNode"
               v-for="node in resourceFiles"
@@ -641,11 +641,11 @@ const ExtensionFileNode = defineComponent({
             >
               无资源文件
             </p>
-            <p class="text-xs text-muted-foreground mt-3 mb-2">特殊文件</p>
+            <p class="mt-3 mb-2 text-xs text-muted-foreground">特殊文件</p>
             <button
               v-for="sf in specialFiles"
               :key="sf.path"
-              class="flex items-center gap-1.5 w-full text-left text-xs px-2 py-1 rounded hover:bg-muted transition-colors"
+              class="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs transition-colors hover:bg-muted"
               :class="{ 'bg-muted': selectedFile === sf.path }"
               @click="loadFileContent(sf.path)"
             >
@@ -653,7 +653,7 @@ const ExtensionFileNode = defineComponent({
             </button>
             <template v-if="workerDisplayName">
               <button
-                class="flex items-center gap-1.5 w-full text-left text-xs px-2 py-1 rounded hover:bg-muted transition-colors mt-0.5"
+                class="mt-0.5 flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs transition-colors hover:bg-muted"
                 :class="{ 'bg-muted': selectedFile === VIRTUAL.WORKER }"
                 @click="loadFileContent(VIRTUAL.WORKER)"
               >
@@ -665,8 +665,8 @@ const ExtensionFileNode = defineComponent({
           </div>
         </div>
 
-        <div class="col-span-2 rounded-lg border p-3 flex flex-col min-h-0">
-          <div class="flex items-center justify-between mb-2 shrink-0">
+        <div class="col-span-2 flex min-h-0 flex-col rounded-lg border p-3">
+          <div class="mb-2 flex shrink-0 items-center justify-between">
             <p class="text-xs text-muted-foreground">内容预览</p>
             <div
               v-if="
@@ -686,7 +686,7 @@ const ExtensionFileNode = defineComponent({
                 class="h-6 px-2 text-xs"
                 @click="fileUploadInputRef?.click()"
               >
-                <Upload class="h-3 w-3 mr-1" />上传替换
+                <Upload class="mr-1 h-3 w-3" />上传替换
               </Button>
               <Button
                 variant="ghost"
@@ -695,8 +695,8 @@ const ExtensionFileNode = defineComponent({
                 :disabled="!isDirty || fileSaving"
                 @click="saveFile"
               >
-                <Loader2 v-if="fileSaving" class="h-3 w-3 mr-1 animate-spin" />
-                <Save v-else class="h-3 w-3 mr-1" />保存
+                <Loader2 v-if="fileSaving" class="mr-1 h-3 w-3 animate-spin" />
+                <Save v-else class="mr-1 h-3 w-3" />保存
               </Button>
             </div>
           </div>
@@ -718,7 +718,7 @@ const ExtensionFileNode = defineComponent({
           >
             <AlertCircle class="h-3 w-3" />{{ fileError }}
           </div>
-          <div v-else class="flex-1 min-h-0 rounded overflow-hidden border">
+          <div v-else class="min-h-0 flex-1 overflow-hidden rounded border">
             <Codemirror
               v-model="editedContent"
               :extensions="editorExtensions"
@@ -755,16 +755,16 @@ const ExtensionFileNode = defineComponent({
       <div class="space-y-1.5">
         <Label class="text-sm font-medium">Token</Label>
         <div class="flex gap-2">
-          <div class="relative flex-1 min-w-0">
+          <div class="relative min-w-0 flex-1">
             <Input
               v-model="tokenInput"
               :type="showToken ? 'text' : 'password'"
-              class="font-mono text-xs pr-8"
+              class="pr-8 font-mono text-xs"
               placeholder="xxxx:yyyy"
             />
             <button
               type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              class="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               @click="showToken = !showToken"
             >
               <Eye v-if="!showToken" class="h-4 w-4" />
@@ -777,8 +777,8 @@ const ExtensionFileNode = defineComponent({
             :disabled="savingToken"
             @click="handleSaveToken"
           >
-            <Loader2 v-if="savingToken" class="h-3 w-3 animate-spin mr-1" />
-            <Save v-else class="h-3 w-3 mr-1" />确认
+            <Loader2 v-if="savingToken" class="mr-1 h-3 w-3 animate-spin" />
+            <Save v-else class="mr-1 h-3 w-3" />确认
           </Button>
         </div>
       </div>
@@ -786,27 +786,27 @@ const ExtensionFileNode = defineComponent({
       <!-- 路由 -->
       <div class="space-y-1.5">
         <Label class="text-sm font-medium">路由</Label>
-        <div class="rounded-md border overflow-hidden">
+        <div class="overflow-hidden rounded-md border">
           <table class="w-full text-xs">
             <thead class="bg-muted/50">
               <tr>
                 <th
-                  class="text-left px-3 py-2 font-medium text-muted-foreground"
+                  class="px-3 py-2 text-left font-medium text-muted-foreground"
                 >
                   name
                 </th>
                 <th
-                  class="text-left px-3 py-2 font-medium text-muted-foreground"
+                  class="px-3 py-2 text-left font-medium text-muted-foreground"
                 >
                   type
                 </th>
                 <th
-                  class="text-left px-3 py-2 font-medium text-muted-foreground"
+                  class="px-3 py-2 text-left font-medium text-muted-foreground"
                 >
                   entry
                 </th>
                 <th
-                  class="text-left px-3 py-2 font-medium text-muted-foreground"
+                  class="px-3 py-2 text-left font-medium text-muted-foreground"
                 >
                   icon path
                 </th>
@@ -821,28 +821,28 @@ const ExtensionFileNode = defineComponent({
                 <td class="px-2 py-1">
                   <input
                     v-model="route.name"
-                    class="w-full bg-transparent font-mono border border-border rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring transition-colors"
+                    class="w-full rounded border border-border bg-transparent px-1 py-0.5 font-mono transition-colors outline-none focus:ring-1 focus:ring-ring"
                     @input="onRouteInput"
                   />
                 </td>
                 <td class="px-2 py-1">
                   <input
                     v-model="route.type"
-                    class="w-full bg-transparent font-mono border border-border rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring transition-colors"
+                    class="w-full rounded border border-border bg-transparent px-1 py-0.5 font-mono transition-colors outline-none focus:ring-1 focus:ring-ring"
                     @input="onRouteInput"
                   />
                 </td>
                 <td class="px-2 py-1">
                   <input
                     v-model="route.entry"
-                    class="w-full bg-transparent font-mono border border-border rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring transition-colors text-muted-foreground"
+                    class="w-full rounded border border-border bg-transparent px-1 py-0.5 font-mono text-muted-foreground transition-colors outline-none focus:ring-1 focus:ring-ring"
                     @input="onRouteInput"
                   />
                 </td>
                 <td class="px-2 py-1">
                   <input
                     v-model="route.icon"
-                    class="w-full bg-transparent font-mono border border-border rounded px-1 py-0.5 outline-none focus:ring-1 focus:ring-ring transition-colors text-muted-foreground"
+                    class="w-full rounded border border-border bg-transparent px-1 py-0.5 font-mono text-muted-foreground transition-colors outline-none focus:ring-1 focus:ring-ring"
                     @input="onRouteInput"
                   />
                 </td>
@@ -852,8 +852,8 @@ const ExtensionFileNode = defineComponent({
         </div>
         <div class="flex justify-end">
           <Button size="sm" :disabled="savingRoutes" @click="handleSaveRoutes">
-            <Loader2 v-if="savingRoutes" class="h-3 w-3 animate-spin mr-1" />
-            <Save v-else class="h-3 w-3 mr-1" />确认
+            <Loader2 v-if="savingRoutes" class="mr-1 h-3 w-3 animate-spin" />
+            <Save v-else class="mr-1 h-3 w-3" />确认
           </Button>
         </div>
       </div>

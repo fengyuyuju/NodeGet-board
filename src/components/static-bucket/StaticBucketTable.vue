@@ -61,7 +61,7 @@ function getPrevieLink(bucket: StaticBucket): string {
 
 <template>
   <div class="space-y-4">
-    <div class="flex items-center gap-2 justify-end">
+    <div class="flex items-center justify-end gap-2">
       <Button
         variant="outline"
         size="sm"
@@ -71,21 +71,21 @@ function getPrevieLink(bucket: StaticBucket): string {
         <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" />
       </Button>
       <Button variant="outline" size="sm" @click="emit('uploadDir')">
-        <Upload class="h-4 w-4 mr-1" />
+        <Upload class="mr-1 h-4 w-4" />
         上传本地目录
       </Button>
       <Button size="sm" @click="emit('create')">
-        <Plus class="h-4 w-4 mr-1" />
+        <Plus class="mr-1 h-4 w-4" />
         创建 Bucket
       </Button>
     </div>
 
-    <div v-if="loading" class="text-center py-10 text-muted-foreground">
+    <div v-if="loading" class="py-10 text-center text-muted-foreground">
       加载中...
     </div>
     <div
       v-else-if="buckets.length === 0"
-      class="text-center py-10 text-muted-foreground"
+      class="py-10 text-center text-muted-foreground"
     >
       暂无 Bucket
     </div>
@@ -104,11 +104,11 @@ function getPrevieLink(bucket: StaticBucket): string {
         <TableRow v-for="bucket in buckets" :key="bucket.name">
           <TableCell>
             <button
-              class="flex items-center gap-1.5 font-mono text-sm text-primary text-left cursor-pointer group"
+              class="group flex cursor-pointer items-center gap-1.5 text-left font-mono text-sm text-primary"
               @click="emit('select', bucket.name)"
             >
               <FolderOpen class="h-4 w-4 shrink-0" />
-              <span class="group-hover:underline underline-offset-2">{{
+              <span class="underline-offset-2 group-hover:underline">{{
                 bucket.name
               }}</span>
             </button>

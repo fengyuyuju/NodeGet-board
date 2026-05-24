@@ -13,8 +13,8 @@ import TrafficBarChart, {
 
 definePage({ meta: { title: "router.node.traffic" } });
 
-const route = useRoute();
-const uuid = computed(() => (route.params as { uuid: string }).uuid);
+const route = useRoute("/dashboard/node/[uuid]/traffic");
+const uuid = computed(() => route.params.uuid);
 const { currentBackend } = useBackendStore();
 
 type SummaryPoint = {
@@ -241,12 +241,12 @@ const SERIES = [
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span
-            class="text-xs text-muted-foreground inline-flex items-center gap-1"
+            class="inline-flex items-center gap-1 text-xs text-muted-foreground"
           >
             粒度
             <select
               v-model="scopeKey"
-              class="bg-card border rounded px-1.5 py-0.5 text-xs text-foreground outline-none cursor-pointer hover:bg-muted transition-colors"
+              class="cursor-pointer rounded border bg-card px-1.5 py-0.5 text-xs text-foreground transition-colors outline-none hover:bg-muted"
             >
               <option v-for="s in SCOPES" :key="s.key" :value="s.key">
                 {{ s.label }}
@@ -254,12 +254,12 @@ const SERIES = [
             </select>
           </span>
           <span
-            class="text-xs text-muted-foreground inline-flex items-center gap-1"
+            class="inline-flex items-center gap-1 text-xs text-muted-foreground"
           >
             每
             <select
               v-model="refreshInterval"
-              class="bg-card border rounded px-1.5 py-0.5 text-xs text-foreground outline-none cursor-pointer hover:bg-muted transition-colors"
+              class="cursor-pointer rounded border bg-card px-1.5 py-0.5 text-xs text-foreground transition-colors outline-none hover:bg-muted"
             >
               <option v-for="i in INTERVALS" :key="i.value" :value="i.value">
                 {{ i.label }}
@@ -281,7 +281,7 @@ const SERIES = [
       </div>
 
       <div class="rounded-lg border bg-card">
-        <div class="px-4 py-3 border-b flex items-center justify-between">
+        <div class="flex items-center justify-between border-b px-4 py-3">
           <span class="text-sm font-semibold">{{ scope.label }}</span>
         </div>
         <div class="relative h-[280px]">
@@ -301,32 +301,32 @@ const SERIES = [
             v-if="buckets.length"
             :data="buckets"
             :visible-series="visibleSeries"
-            class="w-full h-full"
+            class="h-full w-full"
           />
           <div
             v-if="loading && buckets.length"
-            class="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse"
+            class="absolute top-2 right-2 h-1.5 w-1.5 animate-pulse rounded-full bg-primary"
           />
         </div>
         <div v-if="buckets.length" class="border-t px-2 py-2">
           <div
             v-for="s in SERIES"
             :key="s.key"
-            class="flex items-center justify-between px-2 py-1.5 rounded-md text-xs cursor-pointer select-none transition-all hover:bg-muted"
+            class="flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-xs transition-all select-none hover:bg-muted"
             :class="!visibleSeries[s.key] ? 'opacity-35' : 'opacity-100'"
             @mouseenter="hovered = visibleSeries[s.key] ? s.key : null"
             @mouseleave="hovered = null"
             @click="visibleSeries[s.key] = !visibleSeries[s.key]"
           >
-            <span class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="flex min-w-0 flex-1 items-center gap-2">
               <span
-                class="inline-block h-0.5 rounded-full shrink-0 transition-all"
+                class="inline-block h-0.5 shrink-0 rounded-full transition-all"
                 :class="hovered === s.key ? 'w-7' : 'w-5'"
                 :style="{ background: s.color }"
               />
               <span class="text-foreground">{{ s.name }}</span>
             </span>
-            <span class="text-right tabular-nums text-foreground">
+            <span class="text-right text-foreground tabular-nums">
               {{ formatBytes(totals[s.key]) }}
             </span>
           </div>

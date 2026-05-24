@@ -50,15 +50,11 @@ import type {
   DynamicNetworkInterface,
 } from "@/types/monitoring";
 
-definePage({
-  path: "/s/:uuid",
-});
-
 const { t } = useI18n();
 
-const route = useRoute();
+const route = useRoute("/server-detail/[uuid]");
 const router = useRouter();
-const uuid = (route.params as { uuid: string }).uuid;
+const uuid = route.params.uuid;
 
 const isSidebarOpen = ref(false);
 
@@ -280,9 +276,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen text-foreground">
+  <div class="flex h-screen flex-col text-foreground">
     <div class="border-b">
-      <div class="container mx-auto py-3 px-4 flex items-center gap-4">
+      <div class="container mx-auto flex items-center gap-4 px-4 py-3">
         <Button
           variant="ghost"
           size="icon"
@@ -299,19 +295,19 @@ onUnmounted(() => {
     </div>
 
     <!-- Main Layout -->
-    <div class="flex flex-1 overflow-hidden relative">
+    <div class="relative flex flex-1 overflow-hidden">
       <!-- Mobile Sidebar Overlay -->
       <div
         v-if="isSidebarOpen"
-        class="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden"
+        class="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
         @click="isSidebarOpen = false"
       ></div>
 
       <!-- Sidebar -->
       <aside
         :class="[
-          'border-r bg-muted/20 flex flex-col transition-all duration-300 ease-in-out z-50',
-          'fixed inset-y-0 left-0 h-full bg-background md:bg-muted/20 md:relative',
+          'z-50 flex flex-col border-r bg-muted/20 transition-all duration-300 ease-in-out',
+          'fixed inset-y-0 left-0 h-full bg-background md:relative md:bg-muted/20',
           isSidebarOpen
             ? 'translate-x-0'
             : '-translate-x-full md:translate-x-0',
@@ -320,7 +316,7 @@ onUnmounted(() => {
         ]"
       >
         <div
-          class="p-4 border-b flex items-center gap-2 h-16 box-border overflow-hidden"
+          class="box-border flex h-16 items-center gap-2 overflow-hidden border-b p-4"
         >
           <Button
             @click="router.back()"
@@ -330,10 +326,10 @@ onUnmounted(() => {
           >
             <ArrowLeft class="h-4 w-4" />
           </Button>
-          <div class="overflow-hidden flex-1 transition-opacity duration-300">
+          <div class="flex-1 overflow-hidden transition-opacity duration-300">
             <div v-if="server">
-              <h2 class="font-semibold truncate">{{ showHostname(server) }}</h2>
-              <p class="text-xs text-muted-foreground truncate">
+              <h2 class="truncate font-semibold">{{ showHostname(server) }}</h2>
+              <p class="truncate text-xs text-muted-foreground">
                 {{ showOS(server) }}
               </p>
             </div>
@@ -346,15 +342,15 @@ onUnmounted(() => {
           <Button
             variant="ghost"
             size="icon"
-            class="h-8 w-8 md:hidden ml-auto"
+            class="ml-auto h-8 w-8 md:hidden"
             @click="isSidebarOpen = false"
           >
             <X class="h-4 w-4" />
           </Button>
         </div>
 
-        <div class="flex-1 overflow-y-auto overflow-x-hidden">
-          <div class="p-2 space-y-1" v-if="server">
+        <div class="flex-1 overflow-x-hidden overflow-y-auto">
+          <div class="space-y-1 p-2" v-if="server">
             <template v-for="tab in tabs" :key="tab.id">
               <button
                 @click="
@@ -373,15 +369,15 @@ onUnmounted(() => {
                     : {}
                 "
                 :class="[
-                  'w-full flex items-center gap-3 p-3 text-left rounded-lg transition-all border',
+                  'flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all',
                   activeTab === tab.id
                     ? 'shadow-sm'
-                    : 'border-transparent hover:bg-muted/50 text-muted-foreground hover:text-foreground',
+                    : 'border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                 ]"
               >
                 <div
                   :class="[
-                    'p-2 rounded-md shrink-0 transition-all',
+                    'shrink-0 rounded-md p-2 transition-all',
                     activeTab === tab.id ? '' : 'bg-muted',
                   ]"
                   :style="
@@ -403,9 +399,9 @@ onUnmounted(() => {
                     "
                   />
                 </div>
-                <div class="flex-1 min-w-0 transition-all duration-300">
+                <div class="min-w-0 flex-1 transition-all duration-300">
                   <div
-                    class="font-medium text-sm truncate"
+                    class="truncate text-sm font-medium"
                     :style="
                       activeTab === tab.id
                         ? { color: getcolors(tab.id).color }
@@ -415,7 +411,7 @@ onUnmounted(() => {
                     {{ tab.label.value }}
                   </div>
                   <div
-                    class="text-xs text-muted-foreground mt-0.5 font-mono truncate"
+                    class="mt-0.5 truncate font-mono text-xs text-muted-foreground"
                   >
                     <span v-if="tab.id === 'cpu'"
                       >{{ showCpuPercent(server).toFixed(1) }}%</span
@@ -432,11 +428,11 @@ onUnmounted(() => {
                   </div>
                 </div>
                 <div
-                  class="w-1 h-8 rounded-full bg-muted/20 overflow-hidden shrink-0 transition-all duration-300"
+                  class="h-8 w-1 shrink-0 overflow-hidden rounded-full bg-muted/20 transition-all duration-300"
                   v-if="['cpu', 'memory', 'disk'].includes(tab.id)"
                 >
                   <div
-                    class="w-full transition-all duration-500 rounded-full"
+                    class="w-full rounded-full transition-all duration-500"
                     :style="{
                       backgroundColor: getcolors(tab.id).color,
                       height:
@@ -457,15 +453,15 @@ onUnmounted(() => {
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 flex flex-col min-w-0">
+      <main class="flex min-w-0 flex-1 flex-col">
         <div
           v-if="!server"
-          class="flex-1 flex items-center justify-center text-muted-foreground"
+          class="flex flex-1 items-center justify-center text-muted-foreground"
         >
           <div class="flex flex-col items-center gap-2">
             <div
               v-if="dynamicError"
-              class="text-destructive flex items-center gap-2"
+              class="flex items-center gap-2 text-destructive"
             >
               <AlertCircle class="h-5 w-5" /> {{ dynamicError }}
             </div>
@@ -475,16 +471,16 @@ onUnmounted(() => {
 
         <div
           v-else
-          class="flex-1 p-6 overflow-y-auto"
+          class="flex-1 overflow-y-auto p-6"
           :style="{ '--primary': `hsl(${activeTheme.hsl})` }"
         >
-          <div class="max-w-5xl mx-auto space-y-6">
+          <div class="mx-auto max-w-5xl space-y-6">
             <div class="flex items-center justify-between">
-              <h1 class="text-3xl font-bold tracking-light">
+              <h1 class="tracking-light text-3xl font-bold">
                 {{ tabs.find((t) => t.id === activeTab)?.label.value }}
               </h1>
               <Badge variant="outline" class="font-mono text-xs">
-                <Clock class="h-3 w-3 mr-1" />
+                <Clock class="mr-1 h-3 w-3" />
                 System Uptime:
                 {{ formatUptime(server.uptime ?? 0) }}
               </Badge>
@@ -500,7 +496,7 @@ onUnmounted(() => {
                         $t("serverDetail.cpu.totalUtilization")
                       }}</CardTitle>
                       <Tabs v-model="cpuMode" class="w-[200px]">
-                        <TabsList class="grid w-full grid-cols-2 h-8">
+                        <TabsList class="grid h-8 w-full grid-cols-2">
                           <TabsTrigger value="realtime" class="text-xs">{{
                             $t("serverDetail.cpu.realtime")
                           }}</TabsTrigger>
@@ -516,7 +512,7 @@ onUnmounted(() => {
                     >
                       {{ showCpuPercent(server).toFixed(1) }}%
                     </div>
-                    <div class="h-9 flex items-end" v-else>
+                    <div class="flex h-9 items-end" v-else>
                       <span v-if="isLoadingHistory">{{
                         $t("serverDetail.cpu.loadingHistory")
                       }}</span>
@@ -534,11 +530,11 @@ onUnmounted(() => {
                   </CardHeader>
                   <CardContent>
                     <div
-                      class="h-[200px] w-full bg-muted/10 rounded-md border flex items-end p-0 relative overflow-hidden group"
+                      class="group relative flex h-[200px] w-full items-end overflow-hidden rounded-md border bg-muted/10 p-0"
                     >
                       <!-- Axis Guide -->
                       <div
-                        class="absolute inset-y-0 left-0 w-8 flex flex-col justify-between py-2 text-[10px] text-muted-foreground/60 font-mono select-none pointer-events-none pl-2 z-10"
+                        class="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-8 flex-col justify-between py-2 pl-2 font-mono text-[10px] text-muted-foreground/60 select-none"
                       >
                         <div>100%</div>
                         <div>50%</div>
@@ -546,18 +542,18 @@ onUnmounted(() => {
                       </div>
                       <!-- Grid Lines -->
                       <div
-                        class="absolute inset-0 flex flex-col justify-between pointer-events-none z-0"
+                        class="pointer-events-none absolute inset-0 z-0 flex flex-col justify-between"
                       >
                         <div class="border-t border-border/40 opacity-50"></div>
                         <div
-                          class="border-t border-border/40 border-dashed opacity-50"
+                          class="border-t border-dashed border-border/40 opacity-50"
                         ></div>
                         <div class="border-b border-border/40 opacity-50"></div>
                       </div>
                       <svg
                         viewBox="0 0 100 40"
                         preserveAspectRatio="none"
-                        class="w-full h-full text-primary"
+                        class="h-full w-full text-primary"
                       >
                         <defs>
                           <linearGradient
@@ -613,7 +609,7 @@ onUnmounted(() => {
                         />
                       </svg>
                       <div
-                        class="absolute inset-0 flex items-center justify-center text-muted-foreground/20 font-bold text-6xl select-none pointer-events-none group-hover:opacity-0 transition-opacity"
+                        class="pointer-events-none absolute inset-0 flex items-center justify-center text-6xl font-bold text-muted-foreground/20 transition-opacity select-none group-hover:opacity-0"
                       >
                         {{
                           cpuMode === "realtime"
@@ -623,13 +619,13 @@ onUnmounted(() => {
                       </div>
                       <div
                         v-if="cpuMode === 'history' && historyData.length > 0"
-                        class="absolute bottom-1 left-12 text-[10px] text-muted-foreground font-mono"
+                        class="absolute bottom-1 left-12 font-mono text-[10px] text-muted-foreground"
                       >
                         {{ formatTimestamp(historyData[0]!.timestamp) }}
                       </div>
                       <div
                         v-if="cpuMode === 'history' && historyData.length > 0"
-                        class="absolute bottom-1 right-2 text-[10px] text-muted-foreground font-mono"
+                        class="absolute right-2 bottom-1 font-mono text-[10px] text-muted-foreground"
                       >
                         {{
                           formatTimestamp(
@@ -641,35 +637,35 @@ onUnmounted(() => {
                   </CardContent>
                 </Card>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <div
-                    class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+                    class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm"
                   >
-                    <div class="text-xs text-muted-foreground mb-1">
+                    <div class="mb-1 text-xs text-muted-foreground">
                       {{ $t("serverDetail.cpu.loadAverage") }}
                     </div>
-                    <div class="text-lg font-mono">
+                    <div class="font-mono text-lg">
                       {{ formatLoad(server) }}
                     </div>
                   </div>
                   <div
-                    class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+                    class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm"
                   >
-                    <div class="text-xs text-muted-foreground mb-1">
+                    <div class="mb-1 text-xs text-muted-foreground">
                       {{ $t("serverDetail.cpu.cores") }}
                     </div>
-                    <div class="text-lg font-mono">
+                    <div class="font-mono text-lg">
                       {{ server.cpu_static?.per_core?.length ?? "-" }}
                     </div>
                   </div>
                   <div
-                    class="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+                    class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm"
                   >
-                    <div class="text-xs text-muted-foreground mb-1">
+                    <div class="mb-1 text-xs text-muted-foreground">
                       {{ $t("serverDetail.cpu.model") }}
                     </div>
                     <div
-                      class="text-sm font-medium truncate"
+                      class="truncate text-sm font-medium"
                       :title="
                         server?.cpu_static?.per_core?.[0]?.brand || 'Unknown'
                       "
@@ -689,14 +685,14 @@ onUnmounted(() => {
                 class="space-y-6"
               >
                 <!-- Glassmorphism Cards Row -->
-                <div class="grid md:grid-cols-2 gap-8">
+                <div class="grid gap-8 md:grid-cols-2">
                   <!-- Memory Card -->
                   <div
-                    class="relative rounded-2xl border border-white/10 dark:border-white/[0.06] bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-8 py-7 overflow-hidden transition-all hover:shadow-[0_12px_40px_rgba(74,222,128,0.1)]"
+                    class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-card/80 to-card/40 px-8 py-7 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all hover:shadow-[0_12px_40px_rgba(74,222,128,0.1)] dark:border-white/[0.06] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                   >
                     <!-- Subtle glow effect -->
                     <div
-                      class="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-[0.07]"
+                      class="absolute -top-20 -right-20 h-40 w-40 rounded-full opacity-[0.07]"
                       :style="{
                         background: `radial-gradient(circle, ${activeTheme.color}, transparent)`,
                       }"
@@ -708,7 +704,7 @@ onUnmounted(() => {
                           width="130"
                           height="130"
                           viewBox="0 0 130 130"
-                          class="transform -rotate-90"
+                          class="-rotate-90 transform"
                         >
                           <!-- Background ring -->
                           <circle
@@ -751,12 +747,12 @@ onUnmounted(() => {
                         </div>
                       </div>
                       <!-- Details -->
-                      <div class="flex-1 min-w-0 space-y-3">
+                      <div class="min-w-0 flex-1 space-y-3">
                         <div class="flex items-center gap-2">
                           <Database class="h-4 w-4 text-muted-foreground" />
                           <span class="text-lg font-semibold">Memory</span>
                         </div>
-                        <div class="text-xs text-muted-foreground font-mono">
+                        <div class="font-mono text-xs text-muted-foreground">
                           {{ showRamText(server) }}
                         </div>
                         <div class="space-y-2">
@@ -787,10 +783,10 @@ onUnmounted(() => {
 
                   <!-- Swap Card -->
                   <div
-                    class="relative rounded-2xl border border-white/10 dark:border-white/[0.06] bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-8 py-7 overflow-hidden transition-all hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
+                    class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-card/80 to-card/40 px-8 py-7 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all hover:shadow-[0_12px_40px_rgba(0,0,0,0.12)] dark:border-white/[0.06] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                   >
                     <div
-                      class="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-[0.05]"
+                      class="absolute -top-20 -right-20 h-40 w-40 rounded-full opacity-[0.05]"
                       :style="{
                         background: `radial-gradient(circle, ${activeTheme.color}, transparent)`,
                       }"
@@ -802,7 +798,7 @@ onUnmounted(() => {
                           width="130"
                           height="130"
                           viewBox="0 0 130 130"
-                          class="transform -rotate-90"
+                          class="-rotate-90 transform"
                         >
                           <!-- Inactive: dashed ring / Active: solid ring -->
                           <circle
@@ -873,12 +869,12 @@ onUnmounted(() => {
                         </div>
                       </div>
                       <!-- Details -->
-                      <div class="flex-1 min-w-0 space-y-3">
+                      <div class="min-w-0 flex-1 space-y-3">
                         <div class="flex items-center gap-2">
                           <CircuitBoard class="h-4 w-4 text-muted-foreground" />
                           <span class="text-lg font-semibold">Swap</span>
                         </div>
-                        <div class="text-xs text-muted-foreground font-mono">
+                        <div class="font-mono text-xs text-muted-foreground">
                           {{ formatBytes(server.used_swap ?? 0) }} /
                           {{ formatBytes(server.total_swap ?? 0) }}
                         </div>
@@ -917,18 +913,18 @@ onUnmounted(() => {
               >
                 <div
                   v-if="diskList.length === 0"
-                  class="text-sm text-muted-foreground text-center py-12"
+                  class="py-12 text-center text-sm text-muted-foreground"
                 >
                   {{ $t("common.loading") }}
                 </div>
-                <div v-else class="grid md:grid-cols-2 gap-8">
+                <div v-else class="grid gap-8 md:grid-cols-2">
                   <div
                     v-for="(disk, index) in diskList"
                     :key="index"
-                    class="relative rounded-2xl border border-white/10 dark:border-white/[0.06] bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-8 py-7 overflow-hidden transition-all hover:shadow-[0_12px_40px_rgba(251,146,60,0.1)]"
+                    class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-card/80 to-card/40 px-8 py-7 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl transition-all hover:shadow-[0_12px_40px_rgba(251,146,60,0.1)] dark:border-white/[0.06] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                   >
                     <div
-                      class="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-[0.07]"
+                      class="absolute -top-20 -right-20 h-40 w-40 rounded-full opacity-[0.07]"
                       :style="{
                         background: `radial-gradient(circle, ${activeTheme.color}, transparent)`,
                       }"
@@ -940,7 +936,7 @@ onUnmounted(() => {
                           width="130"
                           height="130"
                           viewBox="0 0 130 130"
-                          class="transform -rotate-90"
+                          class="-rotate-90 transform"
                         >
                           <circle
                             cx="65"
@@ -992,18 +988,18 @@ onUnmounted(() => {
                         </div>
                       </div>
                       <!-- Details -->
-                      <div class="flex-1 min-w-0 space-y-3">
+                      <div class="min-w-0 flex-1 space-y-3">
                         <div class="flex items-center gap-2">
                           <HardDrive
                             class="h-4 w-4"
                             :style="{ color: activeTheme.color }"
                           />
-                          <span class="text-lg font-semibold truncate">{{
+                          <span class="truncate text-lg font-semibold">{{
                             disk.mount_point
                           }}</span>
                         </div>
                         <div
-                          class="text-xs text-muted-foreground font-mono truncate"
+                          class="truncate font-mono text-xs text-muted-foreground"
                         >
                           {{ disk.name || $t("common.disk") + " " + index }}
                           · {{ disk.kind }}
@@ -1039,17 +1035,17 @@ onUnmounted(() => {
                 <!-- Total Speed Summary -->
                 <div class="grid grid-cols-2 gap-8">
                   <div
-                    class="relative rounded-2xl border border-white/10 dark:border-white/[0.06] bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-8 py-6 overflow-hidden"
+                    class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-card/80 to-card/40 px-8 py-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl dark:border-white/[0.06] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                   >
                     <div
-                      class="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-[0.07]"
+                      class="absolute -top-20 -right-20 h-40 w-40 rounded-full opacity-[0.07]"
                       :style="{
                         background: `radial-gradient(circle, ${activeTheme.color}, transparent)`,
                       }"
                     ></div>
                     <div class="relative flex items-center gap-4">
                       <div
-                        class="h-10 w-10 rounded-xl flex items-center justify-center"
+                        class="flex h-10 w-10 items-center justify-center rounded-xl"
                         :style="{ backgroundColor: `${activeTheme.color}15` }"
                       >
                         <ArrowDownToLine
@@ -1059,12 +1055,12 @@ onUnmounted(() => {
                       </div>
                       <div>
                         <div
-                          class="text-xs text-muted-foreground font-medium tracking-wide uppercase"
+                          class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
                         >
                           Download
                         </div>
                         <div
-                          class="text-2xl font-bold font-mono tracking-tight"
+                          class="font-mono text-2xl font-bold tracking-tight"
                           :style="{ color: activeTheme.color }"
                         >
                           {{ showNetworkSpeed(server, "rx") }}
@@ -1073,17 +1069,17 @@ onUnmounted(() => {
                     </div>
                   </div>
                   <div
-                    class="relative rounded-2xl border border-white/10 dark:border-white/[0.06] bg-gradient-to-br from-card/80 to-card/40 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] px-8 py-6 overflow-hidden"
+                    class="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-card/80 to-card/40 px-8 py-6 shadow-[0_8px_32px_rgba(0,0,0,0.08)] backdrop-blur-xl dark:border-white/[0.06] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
                   >
                     <div
-                      class="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-[0.05]"
+                      class="absolute -top-20 -right-20 h-40 w-40 rounded-full opacity-[0.05]"
                       :style="{
                         background: `radial-gradient(circle, ${activeTheme.color}, transparent)`,
                       }"
                     ></div>
                     <div class="relative flex items-center gap-4">
                       <div
-                        class="h-10 w-10 rounded-xl flex items-center justify-center"
+                        class="flex h-10 w-10 items-center justify-center rounded-xl"
                         :style="{ backgroundColor: `${activeTheme.color}15` }"
                       >
                         <ArrowUpFromLine
@@ -1093,12 +1089,12 @@ onUnmounted(() => {
                       </div>
                       <div>
                         <div
-                          class="text-xs text-muted-foreground font-medium tracking-wide uppercase"
+                          class="text-xs font-medium tracking-wide text-muted-foreground uppercase"
                         >
                           Upload
                         </div>
                         <div
-                          class="text-2xl font-bold font-mono tracking-tight"
+                          class="font-mono text-2xl font-bold tracking-tight"
                           :style="{ color: activeTheme.color, opacity: 0.8 }"
                         >
                           {{ showNetworkSpeed(server, "tx") }}
@@ -1114,22 +1110,22 @@ onUnmounted(() => {
                 </div>
                 <div
                   v-if="networkInterfaces.length === 0"
-                  class="text-sm text-muted-foreground text-center py-8"
+                  class="py-8 text-center text-sm text-muted-foreground"
                 >
                   {{ $t("common.loading") }}
                 </div>
                 <div
                   v-else
-                  class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                  class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
                 >
                   <div
                     v-for="(iface, index) in networkInterfaces"
                     :key="index"
-                    class="relative rounded-xl border border-white/10 dark:border-white/[0.06] bg-gradient-to-br from-card/60 to-card/30 backdrop-blur-lg p-4 space-y-3 transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)]"
+                    class="relative space-y-3 rounded-xl border border-white/10 bg-gradient-to-br from-card/60 to-card/30 p-4 backdrop-blur-lg transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:border-white/[0.06]"
                   >
                     <div class="flex items-center gap-2.5">
                       <div
-                        class="h-7 w-7 rounded-lg flex items-center justify-center bg-muted/40"
+                        class="flex h-7 w-7 items-center justify-center rounded-lg bg-muted/40"
                       >
                         <Fish
                           v-if="iface.interface_name.startsWith('docker')"
@@ -1149,18 +1145,18 @@ onUnmounted(() => {
                         />
                       </div>
                       <div class="min-w-0">
-                        <div class="font-semibold text-sm truncate">
+                        <div class="truncate text-sm font-semibold">
                           {{ iface.interface_name }}
                         </div>
                         <div
                           v-if="iface.ip_address"
-                          class="text-[10px] text-muted-foreground font-mono truncate"
+                          class="truncate font-mono text-[10px] text-muted-foreground"
                         >
                           {{ iface.ip_address }}
                         </div>
                       </div>
                     </div>
-                    <div class="flex items-center gap-4 text-xs font-mono">
+                    <div class="flex items-center gap-4 font-mono text-xs">
                       <span
                         class="flex items-center gap-1"
                         :style="{ color: activeTheme.color }"

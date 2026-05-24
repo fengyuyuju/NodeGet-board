@@ -85,7 +85,7 @@ async function handleSave() {
   <div class="max-w-lg space-y-6">
     <div
       v-if="loading"
-      class="flex items-center gap-2 text-muted-foreground text-sm py-4"
+      class="flex items-center gap-2 py-4 text-sm text-muted-foreground"
     >
       <Loader2 class="h-4 w-4 animate-spin" />
       {{ $t("common.loading") }}
@@ -95,7 +95,7 @@ async function handleSave() {
       <NodeMetadataForm v-model="form" />
       <div class="pt-2">
         <Button :disabled="saveLoading" @click="handleSave">
-          <Loader2 v-if="saveLoading" class="h-4 w-4 animate-spin mr-2" />
+          <Loader2 v-if="saveLoading" class="mr-2 h-4 w-4 animate-spin" />
           {{ saveLoading ? $t("dashboard.saving") : $t("dashboard.save") }}
         </Button>
       </div>

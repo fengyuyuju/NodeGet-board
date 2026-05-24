@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 // import { RadioGroup, RadioGroupItem, } from '@/components/ui/radio-group'
-import { useBackendStore } from "@/composables/useBackendStore";
+import { useBackendStore, normalizeUrl } from "@/composables/useBackendStore";
 import { useBackendExtra } from "@/composables/useBackendExtra";
 import { getWsConnection } from "@/composables/useWsConnection";
 import { useThemeStore } from "@/stores/theme";
@@ -32,7 +32,7 @@ definePage({
 });
 
 const { t } = useI18n();
-const route = useRoute();
+const route = useRoute("/dashboard/servers-detail/[backendName]");
 const router = useRouter();
 const { backends, currentBackend } = useBackendStore();
 const { serverInfo, saveAgentConfigWsUrl, refreshAll, serverInfoLoading } =
@@ -40,7 +40,7 @@ const { serverInfo, saveAgentConfigWsUrl, refreshAll, serverInfoLoading } =
 const themeStore = useThemeStore();
 
 const backend = computed(() => {
-  const backendName = (route.params as { backendName: string }).backendName;
+  const backendName = route.params.backendName;
   // const sep = raw.indexOf(":::");
   // if (sep === -1) {
   //   const token = decodeURIComponent(raw);
@@ -236,7 +236,7 @@ function saveEdit(field: string) {
       `/dashboard/servers-detail/${encodeURIComponent(editValue.value)}`,
     );
   } else if (field === "url") {
-    backends.value[idx]!.url = editValue.value;
+    backends.value[idx]!.url = normalizeUrl(editValue.value);
   } else if (field === "token") {
     backends.value[idx]!.token = editValue.value;
   }
@@ -298,10 +298,10 @@ function saveEdit(field: string) {
       <!-- Tab: 基本信息 -->
       <TabsContent value="info" class="mt-4">
         <h2 class="mb-2">浏览器本地信息</h2>
-        <div class="rounded-md border divide-y">
+        <div class="divide-y rounded-md border">
           <!-- 名称 -->
-          <div class="flex items-center px-4 py-3 gap-4">
-            <span class="text-sm text-muted-foreground w-28 shrink-0">
+          <div class="flex items-center gap-4 px-4 py-3">
+            <span class="w-28 shrink-0 text-sm text-muted-foreground">
               {{ t("dashboard.servers.detail.infoName") }}
             </span>
             <template v-if="editingField === 'name'">
@@ -340,13 +340,13 @@ function saveEdit(field: string) {
             </template>
           </div>
           <!-- API 地址 -->
-          <div class="flex flex-wrap items-center px-4 py-3 gap-4">
-            <span class="text-sm text-muted-foreground w-28 shrink-0">
+          <div class="flex flex-wrap items-center gap-4 px-4 py-3">
+            <span class="w-28 shrink-0 text-sm text-muted-foreground">
               {{ t("dashboard.servers.detail.infoEndpoint") }}
             </span>
             <div
               v-if="editingField === 'url'"
-              class="flex flex-wrap items-center py-1 gap-x-4 gap-y-1"
+              class="flex flex-wrap items-center gap-x-4 gap-y-1 py-1"
             >
               <Input v-model="editValue" class="h-8 w-64" />
               <Button size="sm" variant="outline" @click="saveEdit('url')">
@@ -368,8 +368,8 @@ function saveEdit(field: string) {
               </RadioGroup> -->
             </div>
             <template v-else>
-              <div class="flex items-center gap-1.5 min-w-0">
-                <span class="text-sm font-mono">{{
+              <div class="flex min-w-0 items-center gap-1.5">
+                <span class="font-mono text-sm">{{
                   backend?.url ?? "--"
                 }}</span>
                 <Button
@@ -419,8 +419,8 @@ function saveEdit(field: string) {
           </div>
 
           <!-- 状态 -->
-          <div class="flex items-center px-4 py-3 gap-4">
-            <span class="text-sm text-muted-foreground w-28 shrink-0">
+          <div class="flex items-center gap-4 px-4 py-3">
+            <span class="w-28 shrink-0 text-sm text-muted-foreground">
               {{ t("dashboard.servers.detail.infoStatus") }}
             </span>
             <Badge v-if="isActive" variant="default">
@@ -431,12 +431,12 @@ function saveEdit(field: string) {
             </Badge>
           </div>
           <!-- Token -->
-          <div class="flex items-start px-4 py-3 gap-4">
-            <span class="text-sm text-muted-foreground w-28 shrink-0 pt-0.5">
+          <div class="flex items-start gap-4 px-4 py-3">
+            <span class="w-28 shrink-0 pt-0.5 text-sm text-muted-foreground">
               {{ t("dashboard.servers.detail.infoToken") }}
             </span>
             <template v-if="editingField === 'token'">
-              <div class="flex flex-col gap-2 min-w-0">
+              <div class="flex min-w-0 flex-col gap-2">
                 <Input v-model="editValue" class="h-8 w-64 font-mono text-xs" />
                 <div class="flex gap-2">
                   <Button
@@ -453,15 +453,15 @@ function saveEdit(field: string) {
               </div>
             </template>
             <template v-else>
-              <div class="flex items-start gap-1.5 min-w-0">
-                <span class="text-sm font-mono break-all">{{
+              <div class="flex min-w-0 items-start gap-1.5">
+                <span class="font-mono text-sm break-all">{{
                   backend?.token ?? "--"
                 }}</span>
                 <Button
                   v-if="backend?.token"
                   size="icon"
                   variant="ghost"
-                  class="h-6 w-6 shrink-0 mt-0.5"
+                  class="mt-0.5 h-6 w-6 shrink-0"
                   @click="copyText('token', backend?.token)"
                 >
                   <Check
@@ -473,7 +473,7 @@ function saveEdit(field: string) {
                 <Button
                   size="icon"
                   variant="ghost"
-                  class="h-6 w-6 shrink-0 mt-0.5"
+                  class="mt-0.5 h-6 w-6 shrink-0"
                   @click="startEdit('token', backend?.token)"
                 >
                   <Pencil class="h-3.5 w-3.5 text-muted-foreground" />
@@ -484,20 +484,20 @@ function saveEdit(field: string) {
         </div>
 
         <h2 class="my-2">远程信息</h2>
-        <div class="rounded-md border divide-y relative">
+        <div class="relative divide-y rounded-md border">
           <div
             v-if="serverInfoLoading"
-            class="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-md"
+            class="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-md bg-background/40 backdrop-blur-[1px]"
           >
             <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
           <!-- UUID -->
-          <div class="flex items-center px-4 py-3 gap-4">
-            <span class="text-sm text-muted-foreground w-28 shrink-0">
+          <div class="flex items-center gap-4 px-4 py-3">
+            <span class="w-28 shrink-0 text-sm text-muted-foreground">
               {{ t("dashboard.servers.detail.infoId") }}
             </span>
-            <div class="flex items-center gap-1.5 min-w-0">
-              <span class="text-sm font-mono">{{ serverUuid ?? "--" }}</span>
+            <div class="flex min-w-0 items-center gap-1.5">
+              <span class="font-mono text-sm">{{ serverUuid ?? "--" }}</span>
               <Button
                 v-if="serverUuid"
                 size="icon"
@@ -515,17 +515,17 @@ function saveEdit(field: string) {
           </div>
 
           <!-- IP -->
-          <div class="flex items-center px-4 py-3 gap-4">
-            <span class="text-sm text-muted-foreground w-28 shrink-0">
+          <div class="flex items-center gap-4 px-4 py-3">
+            <span class="w-28 shrink-0 text-sm text-muted-foreground">
               IP
             </span>
-            <div class="flex items-center gap-1.5 min-w-0">
-              <span class="text-sm font-mono">{{
+            <div class="flex min-w-0 items-center gap-1.5">
+              <span class="font-mono text-sm">{{
                 (typeof backend?.url === "string" &&
                   serverInfo[backend?.url]?.ip) ??
                 "--"
               }}</span>
-              <span class="text-sm font-mono" v-if="local_ws_port"
+              <span class="font-mono text-sm" v-if="local_ws_port"
                 >(:{{ local_ws_port }})</span
               >
               <Button
@@ -580,14 +580,14 @@ function saveEdit(field: string) {
           </div>
 
           <!-- Agent Config API 地址 -->
-          <div class="flex flex-wrap items-center px-4 py-3 gap-4 gap-y-0.5">
-            <span class="text-sm text-muted-foreground w-28 shrink-0">
+          <div class="flex flex-wrap items-center gap-4 gap-y-0.5 px-4 py-3">
+            <span class="w-28 shrink-0 text-sm text-muted-foreground">
               {{ t("dashboard.servers.detail.infoEndpoint") }} <br />[ for agent
               ]
             </span>
             <div
               v-if="editingField === 'agent-url'"
-              class="flex flex-wrap items-center py-1 gap-x-4 gap-y-1"
+              class="flex flex-wrap items-center gap-x-4 gap-y-1 py-1"
             >
               <Input v-model="editValue" class="h-8 w-64" />
               <Button
@@ -603,10 +603,10 @@ function saveEdit(field: string) {
             </div>
             <template v-else>
               <div
-                class="flex items-center gap-1.5 min-w-0"
+                class="flex min-w-0 items-center gap-1.5"
                 v-if="typeof backend?.url === 'string'"
               >
-                <span class="text-sm font-mono">{{
+                <span class="font-mono text-sm">{{
                   serverInfo[backend?.url]?.agentConfigWsUrl || "--"
                 }}</span>
                 <Button
@@ -643,17 +643,17 @@ function saveEdit(field: string) {
               </div>
             </template>
             <div class="w-full"></div>
-            <div class="text-xs font-mono text-muted-foreground ml-32">
+            <div class="ml-32 font-mono text-xs text-muted-foreground">
               添加新的 agent 时使用的 ws_url 配置
             </div>
           </div>
 
           <!-- 版本号 -->
-          <div class="flex items-center px-4 py-3 gap-4">
-            <span class="text-sm text-muted-foreground w-28 shrink-0">
+          <div class="flex items-center gap-4 px-4 py-3">
+            <span class="w-28 shrink-0 text-sm text-muted-foreground">
               {{ t("dashboard.servers.detail.infoVersion") }}
             </span>
-            <span class="text-sm font-mono">{{ serverVersion ?? "--" }}</span>
+            <span class="font-mono text-sm">{{ serverVersion ?? "--" }}</span>
           </div>
         </div>
       </TabsContent>
@@ -672,12 +672,12 @@ function saveEdit(field: string) {
         <div class="space-y-3">
           <div
             v-if="configLoading"
-            class="text-sm text-muted-foreground py-8 text-center"
+            class="py-8 text-center text-sm text-muted-foreground"
           >
             {{ t("dashboard.servers.detail.configLoading") }}
           </div>
           <template v-else>
-            <div class="rounded-md border overflow-hidden">
+            <div class="overflow-hidden rounded-md border">
               <Codemirror
                 v-model="configContent"
                 :extensions="editorExtensions"
@@ -697,7 +697,7 @@ function saveEdit(field: string) {
       <!-- Tab: 版本升级 -->
       <TabsContent value="version" class="mt-4" v-if="false">
         <div
-          class="flex flex-col items-center justify-center py-24 gap-4 text-muted-foreground"
+          class="flex flex-col items-center justify-center gap-4 py-24 text-muted-foreground"
         >
           <PackageOpen class="h-16 w-16 opacity-30" />
           <p class="text-sm">

@@ -208,21 +208,21 @@ const handleUpload = async () => {
       <div class="space-y-4 py-2">
         <div
           v-if="detectedShort && !targetBucket"
-          class="rounded-md bg-muted px-3 py-2 text-sm space-y-0.5"
+          class="space-y-0.5 rounded-md bg-muted px-3 py-2 text-sm"
         >
           <div>
             检测到主题：<span class="font-medium">{{ detectedName }}</span>
           </div>
-          <div class="text-muted-foreground text-xs">
+          <div class="text-xs text-muted-foreground">
             Bucket 名称：<span class="font-mono">{{ bucketName }}</span>
           </div>
         </div>
 
         <div
           v-if="missingShort && !targetBucket"
-          class="flex items-start gap-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2 text-sm text-amber-800 dark:text-amber-300"
+          class="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
         >
-          <AlertTriangle class="h-4 w-4 mt-0.5 shrink-0" />
+          <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0" />
           <span
             >未找到 nodeget-theme.json 或缺少 short 字段，无法确定主题标识</span
           >
@@ -268,7 +268,7 @@ const handleUpload = async () => {
 
         <div
           v-if="processing"
-          class="flex items-center gap-2 text-sm text-muted-foreground py-2"
+          class="flex items-center gap-2 py-2 text-sm text-muted-foreground"
         >
           <Loader2 class="h-4 w-4 animate-spin" />
           正在处理文件...
@@ -284,15 +284,15 @@ const handleUpload = async () => {
               :disabled="uploading"
               @click="clearFileList"
             >
-              <X class="h-3 w-3 mr-1" />
+              <X class="mr-1 h-3 w-3" />
               清除
             </Button>
           </div>
-          <div class="border rounded-md max-h-32 overflow-y-auto">
+          <div class="max-h-32 overflow-y-auto rounded-md border">
             <div
               v-for="f in fileList.slice(0, 50)"
               :key="f.path"
-              class="px-3 py-1 text-xs font-mono border-b last:border-0 text-muted-foreground"
+              class="border-b px-3 py-1 font-mono text-xs text-muted-foreground last:border-0"
             >
               {{ f.path }}
             </div>
@@ -307,14 +307,14 @@ const handleUpload = async () => {
 
         <div
           v-if="targetBucket"
-          class="rounded-md border overflow-hidden text-sm"
+          class="overflow-hidden rounded-md border text-sm"
         >
-          <div class="bg-muted px-3 py-1.5 font-medium text-xs">更新选项</div>
+          <div class="bg-muted px-3 py-1.5 text-xs font-medium">更新选项</div>
           <div class="divide-y">
             <div class="flex items-center justify-between px-3 py-2">
               <span>主题配置（user_preferences）</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-userPrefs"
@@ -324,7 +324,7 @@ const handleUpload = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-userPrefs"
@@ -339,7 +339,7 @@ const handleUpload = async () => {
             <div class="flex items-center justify-between px-3 py-2">
               <span>Token（site_tokens）</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-siteTokens"
@@ -349,7 +349,7 @@ const handleUpload = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-siteTokens"
@@ -364,7 +364,7 @@ const handleUpload = async () => {
             <div class="flex items-center justify-between px-3 py-2">
               <span>自定义 CSS</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-css"
@@ -374,7 +374,7 @@ const handleUpload = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-css"
@@ -389,7 +389,7 @@ const handleUpload = async () => {
             <div class="flex items-center justify-between px-3 py-2">
               <span>自定义 JS</span>
               <div class="flex items-center gap-3">
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-js"
@@ -399,7 +399,7 @@ const handleUpload = async () => {
                   />
                   保留旧配置
                 </label>
-                <label class="flex items-center gap-1 cursor-pointer">
+                <label class="flex cursor-pointer items-center gap-1">
                   <input
                     type="radio"
                     name="keep-js"
@@ -440,7 +440,7 @@ const handleUpload = async () => {
           :disabled="uploading || processing || !canSubmit"
           @click="handleUpload"
         >
-          <Loader2 v-if="uploading" class="h-4 w-4 animate-spin mr-1" />
+          <Loader2 v-if="uploading" class="mr-1 h-4 w-4 animate-spin" />
           {{ targetBucket ? "上传" : "创建并上传" }}
         </Button>
       </DialogFooter>

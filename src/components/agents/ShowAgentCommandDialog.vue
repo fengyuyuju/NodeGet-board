@@ -141,7 +141,7 @@ onUnmounted(stopPolling);
 <template>
   <Dialog v-model:open="open">
     <DialogContent
-      class="sm:max-w-xl max-h-[80vh] grid-rows-[auto_1fr_auto] p-0"
+      class="max-h-[80vh] grid-rows-[auto_1fr_auto] p-0 sm:max-w-xl"
     >
       <DialogHeader class="px-6 pt-6 pb-2">
         <DialogTitle>{{ t("dashboard.agents.addTitle") }}</DialogTitle>
@@ -150,7 +150,7 @@ onUnmounted(stopPolling);
         </DialogDescription>
       </DialogHeader>
 
-      <div class="overflow-y-auto px-6 min-h-0">
+      <div class="min-h-0 overflow-y-auto px-6">
         <div class="space-y-4 py-2">
           <div>
             <h3 class="text-base font-medium">
@@ -160,11 +160,11 @@ onUnmounted(stopPolling);
               {{ t("dashboard.agents.installSubtitle") }}
             </p>
           </div>
-          <div class="rounded-md border overflow-hidden relative">
+          <div class="relative overflow-hidden rounded-md border">
             <button
               type="button"
               @click="copyInstallScript"
-              class="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-background/80 hover:bg-background border border-border/50 hover:border-border transition-colors"
+              class="absolute top-2 right-2 z-10 rounded-md border border-border/50 bg-background/80 p-1.5 transition-colors hover:border-border hover:bg-background"
               :title="isCopied ? 'Copied!' : 'Copy to clipboard'"
             >
               <Check v-if="isCopied" class="h-4 w-4 text-green-500" />
@@ -183,7 +183,7 @@ onUnmounted(stopPolling);
         </div>
 
         <div
-          class="flex flex-col items-center justify-center py-8 gap-4"
+          class="flex flex-col items-center justify-center gap-4 py-8"
           v-if="isOnline"
         >
           <CircleCheckBig class="h-16 w-16 text-green-500" />
@@ -193,7 +193,7 @@ onUnmounted(stopPolling);
         </div>
       </div>
 
-      <DialogFooter class="px-6 pb-6 pt-2">
+      <DialogFooter class="px-6 pt-2 pb-6">
         <Button
           variant="outline"
           @click="

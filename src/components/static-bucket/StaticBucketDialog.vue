@@ -138,7 +138,7 @@ const handleSave = () => {
           :disabled="loading || !form.name || !form.path"
           @click="handleSave"
         >
-          <Loader2 v-if="loading" class="h-4 w-4 mr-1 animate-spin" />
+          <Loader2 v-if="loading" class="mr-1 h-4 w-4 animate-spin" />
           {{ isEdit ? "保存" : "创建" }}
         </Button>
       </DialogFooter>

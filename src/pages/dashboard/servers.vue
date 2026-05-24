@@ -111,12 +111,12 @@ onMounted(() => {
         <h1 class="text-2xl font-semibold">
           {{ t("dashboard.servers.title") }}
         </h1>
-        <p class="text-sm text-muted-foreground mt-1">
+        <p class="mt-1 text-sm text-muted-foreground">
           {{ t("dashboard.servers.desc") }}
         </p>
       </div>
       <Button @click="addOpen = true">
-        <Plus class="h-4 w-4 mr-1.5" />
+        <Plus class="mr-1.5 h-4 w-4" />
         {{ t("dashboard.servers.addServer") }}
       </Button>
     </div>
@@ -145,7 +145,7 @@ onMounted(() => {
               {{ serverInfo[backend.url]?.uuid ?? "--" }}
             </TableCell>
             <TableCell
-              class="font-mono text-xs max-w-[200px] truncate"
+              class="max-w-[200px] truncate font-mono text-xs"
               :title="backend.url"
             >
               {{ backend.url }}

@@ -209,23 +209,23 @@ const handleDelete = async (index: number) => {
         <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" />
       </Button>
       <Button size="sm" @click="openCreate">
-        <Plus class="h-4 w-4 mr-1.5" />
+        <Plus class="mr-1.5 h-4 w-4" />
         {{ t("dashboard.servers.addServer") }}
       </Button>
     </div>
-    <Skeleton class="w-full h-[300px]" v-if="loading" />
+    <Skeleton class="h-[300px] w-full" v-if="loading" />
     <div
-      class="rounded-md border divide-y"
+      class="divide-y rounded-md border"
       v-for="(upstream, index) in agentConfig?.upstreams || []"
       v-else
     >
       <!-- 名称 -->
-      <div class="flex items-center px-4 py-3 gap-4">
-        <span class="text-sm text-muted-foreground w-28 shrink-0">
+      <div class="flex items-center gap-4 px-4 py-3">
+        <span class="w-28 shrink-0 text-sm text-muted-foreground">
           {{ t("dashboard.servers.detail.infoName") }}
         </span>
-        <div class="flex items-center gap-1.5 min-w-0">
-          <span class="text-sm font-mono">{{ upstream.name ?? "--" }}</span>
+        <div class="flex min-w-0 items-center gap-1.5">
+          <span class="font-mono text-sm">{{ upstream.name ?? "--" }}</span>
           <Button
             size="icon"
             variant="ghost"
@@ -241,12 +241,12 @@ const handleDelete = async (index: number) => {
         </div>
       </div>
       <!-- UUID -->
-      <div class="flex items-center px-4 py-3 gap-4">
-        <span class="text-sm text-muted-foreground w-28 shrink-0">
+      <div class="flex items-center gap-4 px-4 py-3">
+        <span class="w-28 shrink-0 text-sm text-muted-foreground">
           {{ t("dashboard.servers.detail.infoId") }}
         </span>
-        <div class="flex items-center gap-1.5 min-w-0">
-          <span class="text-sm font-mono">{{
+        <div class="flex min-w-0 items-center gap-1.5">
+          <span class="font-mono text-sm">{{
             upstream.server_uuid ?? "--"
           }}</span>
           <Button
@@ -264,12 +264,12 @@ const handleDelete = async (index: number) => {
         </div>
       </div>
       <!-- API 地址 -->
-      <div class="flex flex-wrap items-center px-4 py-3 gap-4">
-        <span class="text-sm text-muted-foreground w-28 shrink-0">
+      <div class="flex flex-wrap items-center gap-4 px-4 py-3">
+        <span class="w-28 shrink-0 text-sm text-muted-foreground">
           {{ t("dashboard.servers.detail.infoEndpoint") }}
         </span>
-        <div class="flex items-center gap-1.5 min-w-0">
-          <span class="text-sm font-mono">{{ upstream.ws_url ?? "--" }}</span>
+        <div class="flex min-w-0 items-center gap-1.5">
+          <span class="font-mono text-sm">{{ upstream.ws_url ?? "--" }}</span>
           <Button
             v-if="upstream.ws_url"
             size="icon"
@@ -286,8 +286,8 @@ const handleDelete = async (index: number) => {
         </div>
       </div>
       <!-- 状态 -->
-      <div class="flex items-center px-4 py-3 gap-4">
-        <span class="text-sm text-muted-foreground w-28 shrink-0">
+      <div class="flex items-center gap-4 px-4 py-3">
+        <span class="w-28 shrink-0 text-sm text-muted-foreground">
           {{ t("dashboard.servers.detail.infoStatus") }}
         </span>
         <Badge
@@ -301,19 +301,19 @@ const handleDelete = async (index: number) => {
         </Badge>
       </div>
       <!-- Token -->
-      <div class="flex items-start px-4 py-3 gap-4">
-        <span class="text-sm text-muted-foreground w-28 shrink-0 pt-0.5">
+      <div class="flex items-start gap-4 px-4 py-3">
+        <span class="w-28 shrink-0 pt-0.5 text-sm text-muted-foreground">
           {{ t("dashboard.servers.detail.infoToken") }}
         </span>
-        <div class="flex items-start gap-1.5 min-w-0">
-          <span class="text-sm font-mono break-all">{{
+        <div class="flex min-w-0 items-start gap-1.5">
+          <span class="font-mono text-sm break-all">{{
             upstream.token ?? "--"
           }}</span>
           <Button
             v-if="upstream.token"
             size="icon"
             variant="ghost"
-            class="h-6 w-6 shrink-0 mt-0.5"
+            class="mt-0.5 h-6 w-6 shrink-0"
             @click="copyText('token', index, upstream.token)"
           >
             <Check
@@ -325,18 +325,18 @@ const handleDelete = async (index: number) => {
         </div>
       </div>
       <!-- ignore_cert -->
-      <div class="flex items-start px-4 py-3 gap-4">
-        <span class="text-sm text-muted-foreground w-28 shrink-0 pt-0.5">
+      <div class="flex items-start gap-4 px-4 py-3">
+        <span class="w-28 shrink-0 pt-0.5 text-sm text-muted-foreground">
           忽略TLS错误
         </span>
-        <div class="flex items-start gap-1.5 min-w-0">
-          <span class="text-sm font-mono break-all">{{
+        <div class="flex min-w-0 items-start gap-1.5">
+          <span class="font-mono text-sm break-all">{{
             upstream.ignore_cert ? "是" : "否"
           }}</span>
         </div>
       </div>
       <!-- Operation -->
-      <div class="flex items-start px-4 py-3 gap-2 justify-end">
+      <div class="flex items-start justify-end gap-2 px-4 py-3">
         <Button v-if="upstream.token" @click="openEdit(index)">
           <Pencil class="h-3.5 w-3.5" />
           编辑

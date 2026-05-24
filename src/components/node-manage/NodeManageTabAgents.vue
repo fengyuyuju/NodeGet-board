@@ -56,6 +56,7 @@ import ShowAgentCommandDialog from "@/components/agents/ShowAgentCommandDialog.v
 import { useAgentInfo } from "@/composables/useAgentInfo";
 import VersionDialog from "@/components/node-manage/VersionDialog.vue";
 import { PopConfirm } from "@/components/ui/pop-confirm";
+import { useLifecycle } from "@/composables/useLifecycle";
 
 import { compareVersions } from "compare-versions";
 import { useTask } from "@/composables/useTask";
@@ -69,6 +70,7 @@ const currentAgentInfo = useAgentInfo(undefined, {
   withIP: true,
   withVersion: true,
 });
+const { afterAgentCreate } = useLifecycle();
 
 const { createSelfUpdateTask } = useTask();
 
@@ -313,6 +315,19 @@ async function confirmVersion(version: string) {
   toast.success("agent升级完成");
 }
 
+async function reinitAgent(uuid: string) {
+  await afterAgentCreate(
+    uuid,
+    {
+      cronList: [],
+      metadata: {},
+      databaseLimit: {},
+    },
+    currentBackend,
+  );
+  await refresh();
+}
+
 function fetchVersion() {
   const repo = import.meta.env.VITE_RELEASE_REPO;
   return fetch(`https://api.github.com/repos/${repo}/releases`)
@@ -342,9 +357,9 @@ refresh();
 <template>
   <div class="space-y-4">
     <div class="flex items-center gap-3">
-      <div class="relative flex-1 max-w-sm">
+      <div class="relative max-w-sm flex-1">
         <Search
-          class="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+          class="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground"
         />
         <Input
           v-model="searchQuery"
@@ -359,7 +374,7 @@ refresh();
           :disabled="loading || !hasSelection"
           @click="handleBatchAction('upgrade')"
         >
-          <CloudDownload class="h-4 w-4 mr-1.5" />
+          <CloudDownload class="mr-1.5 h-4 w-4" />
           {{ t("dashboard.agents.batchUpgrade") }}
         </Button>
         <!-- temp disabled -->
@@ -369,13 +384,13 @@ refresh();
           @click="handleBatchAction('move')"
           v-if="false"
         >
-          <FolderInput class="h-4 w-4 mr-1.5" />
+          <FolderInput class="mr-1.5 h-4 w-4" />
           {{ t("dashboard.agents.batchMove") }}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button size="sm" variant="outline" v-if="false">
-              <Copy class="h-4 w-4 mr-1.5" />
+              <Copy class="mr-1.5 h-4 w-4" />
               {{ t("dashboard.agents.batchCopy") }}
             </Button>
           </DropdownMenuTrigger>
@@ -405,7 +420,7 @@ refresh();
         :disabled="loading || agents.length < 2"
         @click="sortable = !sortable"
       >
-        <Menu class="h-4 w-4 mr-1.5" />
+        <Menu class="mr-1.5 h-4 w-4" />
         {{
           sortable
             ? t("dashboard.agents.sortSave")
@@ -413,7 +428,7 @@ refresh();
         }}
       </Button>
       <Button @click="addAgentOpen = true">
-        <Plus class="h-4 w-4 mr-1.5" />
+        <Plus class="mr-1.5 h-4 w-4" />
         {{ t("dashboard.agents.addAgent") }}
       </Button>
     </div>
@@ -422,13 +437,13 @@ refresh();
       v-if="loading"
       class="flex items-center justify-center py-12 text-muted-foreground"
     >
-      <Loader2 class="h-5 w-5 animate-spin mr-2" />
+      <Loader2 class="mr-2 h-5 w-5 animate-spin" />
       {{ t("common.loading") }}
     </div>
 
     <div
       v-else-if="agents.length === 0"
-      class="py-12 text-center text-muted-foreground text-sm"
+      class="py-12 text-center text-sm text-muted-foreground"
     >
       {{ t("dashboard.agents.noAgents") }}
     </div>
@@ -518,7 +533,7 @@ refresh();
                     <TooltipTrigger as-child>
                       <Badge
                         variant="outline"
-                        class="bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 ml-2"
+                        class="ml-2 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
                       >
                         脚本更新
                         <Info data-icon="inline-start" />
@@ -552,13 +567,13 @@ refresh();
                         latestVersion,
                       ) < 0
                     "
-                    class="bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 ml-2"
+                    class="ml-2 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
                     >可更新</Badge
                   >
                   <Badge
                     variant="outline"
                     v-else
-                    class="bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300 ml-2"
+                    class="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
                     >最新版本</Badge
                   >
                 </template>
@@ -581,6 +596,22 @@ refresh();
               >
                 <CloudDownload class="h-4 w-4" />
               </Button>
+              <PopConfirm
+                title="重新初始化agent？"
+                description="是否重新初始化agent，这会初始化agent的名称，经纬度，费用等等信息"
+                :confirm-text="t('dashboard.servers.refreshConfirm')"
+                :cancel-text="t('dashboard.servers.deleteCancel')"
+                @confirm="reinitAgent(agent.uuid)"
+              >
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  class="h-8 w-8"
+                  title="重新初始化"
+                >
+                  <RefreshCw class="h-4 w-4" />
+                </Button>
+              </PopConfirm>
               <PopConfirm
                 title="重新连接agent？(危险操作)"
                 description="会关闭已授权此agent的token，并生成新的连接命令和token，已连接的agent（如果存在）会被强制断开连接，直至使用新的连接命令重新连接，适用于重装系统后恢复连接"

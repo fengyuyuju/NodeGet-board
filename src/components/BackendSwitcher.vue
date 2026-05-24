@@ -209,41 +209,41 @@ watch(
 
       <div
         class="grid gap-4 py-4"
-        :class="{ 'opacity-50 pointer-events-none': isLoading }"
+        :class="{ 'pointer-events-none opacity-50': isLoading }"
       >
         <!-- 主控列表：仅在 showList !== false 时显示 -->
         <template v-if="showList !== false">
-          <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto">
+          <div class="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
             <div
               v-if="backends.length === 0"
-              class="text-sm text-muted-foreground text-center py-4"
+              class="py-4 text-center text-sm text-muted-foreground"
             >
               No backends added. Add one below :D
             </div>
             <div
               v-for="backend in backends"
               :key="backend.url"
-              class="flex items-center justify-between p-3 border rounded-md"
+              class="flex items-center justify-between rounded-md border p-3"
               :class="{
                 'border-primary bg-primary/5':
                   currentBackend?.url === backend.url &&
                   currentBackend?.token === backend.token,
               }"
             >
-              <div class="flex flex-col flex-1 min-w-0 mr-4">
+              <div class="mr-4 flex min-w-0 flex-1 flex-col">
                 <div class="flex items-center gap-2">
-                  <span class="font-medium truncate">{{ backend.name }}</span>
+                  <span class="truncate font-medium">{{ backend.name }}</span>
                   <span
                     v-if="
                       currentBackend?.url === backend.url &&
                       currentBackend?.token === backend.token
                     "
-                    class="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full"
+                    class="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
                     >Active</span
                   >
                 </div>
                 <span
-                  class="text-xs text-muted-foreground truncate"
+                  class="truncate text-xs text-muted-foreground"
                   :title="backend.url"
                   >{{ backend.url }}</span
                 >
@@ -348,8 +348,8 @@ watch(
             @click="handleAdd"
             :disabled="!newName || !newUrl || !newToken || isLoading"
           >
-            <Loader2 v-if="isLoading" class="h-4 w-4 mr-2 animate-spin" />
-            <Plus v-else class="h-4 w-4 mr-2" />
+            <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
+            <Plus v-else class="mr-2 h-4 w-4" />
             {{
               isLoading
                 ? t("dashboard.servers.addServerLoading")
@@ -357,7 +357,7 @@ watch(
             }}
           </RainbowButton>
           <Button v-else disabled variant="outline" class="h-11 rounded-xl">
-            <Plus class="h-4 w-4 mr-2" />{{ t("dashboard.servers.addServer") }}
+            <Plus class="mr-2 h-4 w-4" />{{ t("dashboard.servers.addServer") }}
           </Button>
         </div>
       </div>

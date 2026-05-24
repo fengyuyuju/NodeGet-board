@@ -76,10 +76,8 @@ function computeStats(
     });
 }
 
-const route = useRoute();
-const uuid = computed(
-  () => (route.params as Record<string, string>).uuid ?? "",
-);
+const route = useRoute("/dashboard/node/[uuid]/LatencyView");
+const uuid = computed(() => route.params.uuid);
 
 const { currentBackend } = useBackendStore();
 const { queryTask } = useCronHistory();
@@ -258,12 +256,12 @@ watch(
       <!-- 顶部控制栏 -->
       <div class="flex items-center justify-between">
         <span
-          class="text-xs text-muted-foreground inline-flex items-center gap-1"
+          class="inline-flex items-center gap-1 text-xs text-muted-foreground"
         >
           最近
           <select
             v-model="windowMs"
-            class="bg-card border rounded px-1.5 py-0.5 text-xs text-foreground outline-none cursor-pointer hover:bg-muted transition-colors"
+            class="cursor-pointer rounded border bg-card px-1.5 py-0.5 text-xs text-foreground transition-colors outline-none hover:bg-muted"
           >
             <option v-for="w in WINDOWS" :key="w.value" :value="w.value">
               {{ w.label }}
@@ -271,12 +269,12 @@ watch(
           </select>
         </span>
         <span
-          class="text-xs text-muted-foreground inline-flex items-center gap-1"
+          class="inline-flex items-center gap-1 text-xs text-muted-foreground"
         >
           每
           <select
             v-model="refreshInterval"
-            class="bg-card border rounded px-1.5 py-0.5 text-xs text-foreground outline-none cursor-pointer hover:bg-muted transition-colors"
+            class="cursor-pointer rounded border bg-card px-1.5 py-0.5 text-xs text-foreground transition-colors outline-none hover:bg-muted"
           >
             <option
               v-for="item in INTERVALS"
@@ -292,15 +290,15 @@ watch(
 
       <!-- TCP Ping 图表 -->
       <div class="rounded-lg border bg-card">
-        <div class="px-4 py-3 border-b flex items-center justify-between">
+        <div class="flex items-center justify-between border-b px-4 py-3">
           <span class="text-sm font-semibold">TCP Ping</span>
           <label
-            class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-muted-foreground"
+            class="inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground select-none"
           >
             <input
               v-model="tcpPingPeakCut"
               type="checkbox"
-              class="accent-primary w-3.5 h-3.5 cursor-pointer"
+              class="h-3.5 w-3.5 cursor-pointer accent-primary"
             />
             削峰
           </label>
@@ -327,12 +325,12 @@ watch(
             type="tcp_ping"
             :peak-cut="tcpPingPeakCut"
             :visible-series="tcpPingVisible"
-            class="w-full h-full"
+            class="h-full w-full"
           />
           <!-- 刷新中：轻量覆盖指示，不遮挡图表 -->
           <div
             v-if="tcpPingLoading && tcpPingData.length > 0"
-            class="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse"
+            class="absolute top-2 right-2 h-1.5 w-1.5 animate-pulse rounded-full bg-primary"
           />
         </div>
         <!-- 统计数据 -->
@@ -351,31 +349,31 @@ watch(
             <div
               v-for="(s, i) in tcpPingStats"
               :key="s.name"
-              class="flex items-center justify-between px-2 py-1.5 rounded-md text-xs cursor-pointer select-none transition-all hover:bg-muted"
+              class="flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-xs transition-all select-none hover:bg-muted"
               :class="
                 tcpPingVisible[s.name] === false ? 'opacity-35' : 'opacity-100'
               "
               @click="tcpPingVisible[s.name] = !tcpPingVisible[s.name]"
             >
-              <span class="flex items-center gap-2 min-w-0 flex-1 mr-4">
+              <span class="mr-4 flex min-w-0 flex-1 items-center gap-2">
                 <span
-                  class="inline-block w-5 h-0.5 rounded-full flex-shrink-0"
+                  class="inline-block h-0.5 w-5 flex-shrink-0 rounded-full"
                   :style="{ background: s.color }"
                 />
                 <span class="truncate text-foreground">{{ s.name }}</span>
               </span>
               <div class="flex flex-shrink-0">
-                <span class="w-20 text-right tabular-nums text-foreground">
+                <span class="w-20 text-right text-foreground tabular-nums">
                   {{ s.avg != null ? s.avg.toFixed(1) + " ms" : "—" }}
                 </span>
-                <span class="w-16 text-right tabular-nums text-foreground">
+                <span class="w-16 text-right text-foreground tabular-nums">
                   {{ s.jitter != null ? s.jitter.toFixed(1) + " ms" : "—" }}
                 </span>
                 <span
                   class="w-14 text-right tabular-nums"
                   :class="
                     s.lossRate >= 5
-                      ? 'text-red-500 font-medium'
+                      ? 'font-medium text-red-500'
                       : 'text-foreground'
                   "
                 >
@@ -389,15 +387,15 @@ watch(
 
       <!-- Ping 图表 -->
       <div class="rounded-lg border bg-card">
-        <div class="px-4 py-3 border-b flex items-center justify-between">
+        <div class="flex items-center justify-between border-b px-4 py-3">
           <span class="text-sm font-semibold">Ping</span>
           <label
-            class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-muted-foreground"
+            class="inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground select-none"
           >
             <input
               v-model="pingPeakCut"
               type="checkbox"
-              class="accent-primary w-3.5 h-3.5 cursor-pointer"
+              class="h-3.5 w-3.5 cursor-pointer accent-primary"
             />
             削峰
           </label>
@@ -421,11 +419,11 @@ watch(
             type="ping"
             :peak-cut="pingPeakCut"
             :visible-series="pingVisible"
-            class="w-full h-full"
+            class="h-full w-full"
           />
           <div
             v-if="pingLoading && pingData.length > 0"
-            class="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary animate-pulse"
+            class="absolute top-2 right-2 h-1.5 w-1.5 animate-pulse rounded-full bg-primary"
           />
         </div>
         <!-- 统计数据 -->
@@ -444,31 +442,31 @@ watch(
             <div
               v-for="(s, i) in pingStats"
               :key="s.name"
-              class="flex items-center justify-between px-2 py-1.5 rounded-md text-xs cursor-pointer select-none transition-all hover:bg-muted"
+              class="flex cursor-pointer items-center justify-between rounded-md px-2 py-1.5 text-xs transition-all select-none hover:bg-muted"
               :class="
                 pingVisible[s.name] === false ? 'opacity-35' : 'opacity-100'
               "
               @click="pingVisible[s.name] = !pingVisible[s.name]"
             >
-              <span class="flex items-center gap-2 min-w-0 flex-1 mr-4">
+              <span class="mr-4 flex min-w-0 flex-1 items-center gap-2">
                 <span
-                  class="inline-block w-5 h-0.5 rounded-full flex-shrink-0"
+                  class="inline-block h-0.5 w-5 flex-shrink-0 rounded-full"
                   :style="{ background: s.color }"
                 />
                 <span class="truncate text-foreground">{{ s.name }}</span>
               </span>
               <div class="flex flex-shrink-0">
-                <span class="w-20 text-right tabular-nums text-foreground">
+                <span class="w-20 text-right text-foreground tabular-nums">
                   {{ s.avg != null ? s.avg.toFixed(1) + " ms" : "—" }}
                 </span>
-                <span class="w-16 text-right tabular-nums text-foreground">
+                <span class="w-16 text-right text-foreground tabular-nums">
                   {{ s.jitter != null ? s.jitter.toFixed(1) + " ms" : "—" }}
                 </span>
                 <span
                   class="w-14 text-right tabular-nums"
                   :class="
                     s.lossRate >= 5
-                      ? 'text-red-500 font-medium'
+                      ? 'font-medium text-red-500'
                       : 'text-foreground'
                   "
                 >

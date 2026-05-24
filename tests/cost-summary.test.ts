@@ -51,7 +51,8 @@ test("custom fx provider template is optional and falls back to Frankfurter", ()
 });
 
 test("custom fx provider template can be read from a plain string kv value", () => {
-  const template = "https://rates.example.com/latest?base={base}&symbols={targets}";
+  const template =
+    "https://rates.example.com/latest?base={base}&symbols={targets}";
   assert.equal(parseFxProviderTemplate(template), template);
   assert.equal(isValidCustomFxUrlTemplate(template), true);
   assert.equal(
@@ -225,7 +226,9 @@ test("aggregateCosts excludes expired nodes from monthly totals while keeping re
   assert.equal(Number(stats.avgMonthlyCost.toFixed(2)), 30);
   assert.equal(Number(stats.totalRemainingValue.toFixed(2)), 15);
 
-  const expiredNode = stats.evaluatedNodes.find((node) => node.id === "expired");
+  const expiredNode = stats.evaluatedNodes.find(
+    (node) => node.id === "expired",
+  );
   assert.ok(expiredNode);
   assert.equal(expiredNode.expired, true);
   assert.equal(expiredNode.monthlyCostBase, 0);
@@ -285,6 +288,12 @@ test("fx snapshot freshness uses a 24h ttl", () => {
     { rates: { EUR: 0.8 } },
     "2026-05-03T00:00:00.000Z",
   );
-  assert.equal(isFxSnapshotFresh(fresh, new Date("2026-05-03T12:00:00.000Z").getTime()), true);
-  assert.equal(isFxSnapshotFresh(fresh, new Date("2026-05-04T12:00:01.000Z").getTime()), false);
+  assert.equal(
+    isFxSnapshotFresh(fresh, new Date("2026-05-03T12:00:00.000Z").getTime()),
+    true,
+  );
+  assert.equal(
+    isFxSnapshotFresh(fresh, new Date("2026-05-04T12:00:01.000Z").getTime()),
+    false,
+  );
 });

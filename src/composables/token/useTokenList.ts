@@ -4,6 +4,10 @@ import { useBackendStore } from "@/composables/useBackendStore";
 import { getWsConnection } from "@/composables/useWsConnection";
 import { toast } from "vue-sonner";
 import { type TokenDetail } from "@/components/token/type";
+import {
+  getPasswordChangeValidationError,
+  normalizeRollTargetToken,
+} from "@/composables/token/tokenSecret";
 
 export type errorResponse = {
   error: {
@@ -24,6 +28,27 @@ export type Token = {
   timestamp_to: null | number;
   token_limit: TokenLimit[];
   username: string | null;
+};
+
+const getTokenErrorMessage = (error: unknown) => {
+  if (error && typeof error === "object") {
+    const source = error as {
+      message?: unknown;
+      error?: {
+        message?: unknown;
+      };
+    };
+
+    if (typeof source.error?.message === "string" && source.error.message) {
+      return source.error.message;
+    }
+
+    if (typeof source.message === "string" && source.message) {
+      return source.message;
+    }
+  }
+
+  return "";
 };
 
 export const useTokenListHook = () => {
@@ -74,6 +99,108 @@ export const useTokenListHook = () => {
     }
   };
 
+  const rollTokenSecret = async (
+    targetTokenValue: string,
+  ): Promise<{ key?: string; secret?: string }> => {
+    const url = backendUrl.value.trim();
+    const token = currentBackend.value?.token?.trim() || "";
+    const target_token = normalizeRollTargetToken(targetTokenValue);
+    if (!url || !token || !target_token) return {};
+
+    try {
+      const result = await getWsConnection(url).call<{
+        key?: string;
+        secret?: string;
+        message?: string;
+        error?: {
+          message?: string;
+        };
+      }>("token_roll_token_secret", {
+        token,
+        target_token,
+      });
+
+      if (result.key && result.secret) {
+        toast.success(t("dashboard.token.api.rollSecretSuccess"));
+        return result;
+      }
+
+      const message = result?.error?.message || result?.message || "";
+      toast.error(
+        message
+          ? t("dashboard.token.api.rollSecretFailedWithMessage", { message })
+          : t("dashboard.token.api.rollSecretFailed"),
+      );
+      return {};
+    } catch (error) {
+      console.error(error);
+      const message = getTokenErrorMessage(error);
+      toast.error(
+        message
+          ? t("dashboard.token.api.rollSecretFailedWithMessage", { message })
+          : t("dashboard.token.api.rollSecretFailed"),
+      );
+      return {};
+    }
+  };
+
+  const changeTokenPassword = async (
+    targetTokenValue: string,
+    newPassword: string,
+  ): Promise<boolean> => {
+    const url = backendUrl.value.trim();
+    const token = currentBackend.value?.token?.trim() || "";
+    const target_token = normalizeRollTargetToken(targetTokenValue);
+    if (
+      !url ||
+      !token ||
+      !target_token ||
+      getPasswordChangeValidationError(newPassword, newPassword)
+    ) {
+      return false;
+    }
+
+    try {
+      const result = await getWsConnection(url).call<{
+        success?: boolean;
+        message?: string;
+        error?: {
+          message?: string;
+        };
+      }>("token_change_password", {
+        token,
+        target_token,
+        new_password: newPassword,
+      });
+
+      if (result?.success) {
+        toast.success(t("dashboard.token.api.changePasswordSuccess"));
+        return true;
+      }
+
+      const message = result?.error?.message || result?.message || "";
+      toast.error(
+        message
+          ? t("dashboard.token.api.changePasswordFailedWithMessage", {
+              message,
+            })
+          : t("dashboard.token.api.changePasswordFailed"),
+      );
+      return false;
+    } catch (error) {
+      console.error(error);
+      const message = getTokenErrorMessage(error);
+      toast.error(
+        message
+          ? t("dashboard.token.api.changePasswordFailedWithMessage", {
+              message,
+            })
+          : t("dashboard.token.api.changePasswordFailed"),
+      );
+      return false;
+    }
+  };
+
   const getTokenDetailApi = async (
     searchToken: string,
   ): Promise<TokenDetail | null> => {
@@ -103,5 +230,11 @@ export const useTokenListHook = () => {
     getTokenList();
   });
 
-  return { getTokenList, deleteToken, getTokenDetailApi };
+  return {
+    getTokenList,
+    deleteToken,
+    getTokenDetailApi,
+    rollTokenSecret,
+    changeTokenPassword,
+  };
 };

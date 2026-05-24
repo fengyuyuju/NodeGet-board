@@ -472,11 +472,11 @@ onUnmounted(() => {
     <div class="map-grid pointer-events-none absolute inset-0 z-0" />
     <div class="map-vignette pointer-events-none absolute inset-0 z-0" />
     <div
-      class="pointer-events-none absolute left-[0.9rem] top-[0.9rem] z-0 h-[2.8rem] w-[2.8rem] rounded-tl-[0.6rem] border-l-2 border-t-2"
+      class="pointer-events-none absolute top-[0.9rem] left-[0.9rem] z-0 h-[2.8rem] w-[2.8rem] rounded-tl-[0.6rem] border-t-2 border-l-2"
       :class="frameClass"
     />
     <div
-      class="pointer-events-none absolute right-[0.9rem] top-[0.9rem] z-0 h-[2.8rem] w-[2.8rem] rounded-tr-[0.6rem] border-r-2 border-t-2"
+      class="pointer-events-none absolute top-[0.9rem] right-[0.9rem] z-0 h-[2.8rem] w-[2.8rem] rounded-tr-[0.6rem] border-t-2 border-r-2"
       :class="frameClass"
     />
     <div
@@ -484,7 +484,7 @@ onUnmounted(() => {
       :class="frameClass"
     />
     <div
-      class="pointer-events-none absolute bottom-[0.9rem] right-[0.9rem] z-0 h-[2.8rem] w-[2.8rem] rounded-br-[0.6rem] border-b-2 border-r-2"
+      class="pointer-events-none absolute right-[0.9rem] bottom-[0.9rem] z-0 h-[2.8rem] w-[2.8rem] rounded-br-[0.6rem] border-r-2 border-b-2"
       :class="frameClass"
     />
     <div
@@ -505,7 +505,7 @@ onUnmounted(() => {
         >
           <div class="min-w-0 flex-1">
             <div
-              class="flex items-baseline gap-1.5 truncate text-sm font-semibold leading-tight"
+              class="flex items-baseline gap-1.5 truncate text-sm leading-tight font-semibold"
             >
               <span class="truncate">{{
                 popoverCountryName(pickedPoint)

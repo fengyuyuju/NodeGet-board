@@ -334,7 +334,7 @@ const steps = [
 <template>
   <Dialog v-model:open="open">
     <DialogContent
-      class="sm:max-w-xl max-h-[80vh] grid-rows-[auto_1fr_auto] p-0"
+      class="max-h-[80vh] grid-rows-[auto_1fr_auto] p-0 sm:max-w-xl"
     >
       <DialogHeader class="px-6 pt-6 pb-2">
         <DialogTitle>{{ t("dashboard.agents.addTitle") }}</DialogTitle>
@@ -353,7 +353,7 @@ const steps = [
                   class="text-xs"
                   :class="
                     step >= s.key
-                      ? 'text-foreground font-medium'
+                      ? 'font-medium text-foreground'
                       : 'text-muted-foreground'
                   "
                 >
@@ -362,7 +362,7 @@ const steps = [
               </div>
               <div
                 v-if="i < steps.length - 1"
-                class="w-6 h-px mx-1"
+                class="mx-1 h-px w-6"
                 :class="step > s.key ? 'bg-primary' : 'bg-muted-foreground/30'"
               />
             </template>
@@ -370,7 +370,7 @@ const steps = [
         </DialogDescription>
       </DialogHeader>
 
-      <div class="overflow-y-auto px-6 min-h-0">
+      <div class="min-h-0 overflow-y-auto px-6">
         <!-- Step 1: 基础信息 -->
         <div v-if="step === 1" class="space-y-4 py-2">
           <div class="space-y-2">
@@ -398,7 +398,7 @@ const steps = [
             <div class="flex gap-2">
               <Input v-model="nodeUuid" readonly class="font-mono text-xs" />
               <Button variant="outline" size="sm" @click="generateUuid">
-                <RefreshCw class="h-3.5 w-3.5 mr-1" />
+                <RefreshCw class="mr-1 h-3.5 w-3.5" />
                 {{ t("dashboard.agents.generateUuid") }}
               </Button>
             </div>
@@ -427,11 +427,11 @@ const steps = [
             </div>
             <div
               v-if="cronList.length === 0"
-              class="text-sm text-muted-foreground py-2"
+              class="py-2 text-sm text-muted-foreground"
             >
               -- 暂无Agent定时任务 --
             </div>
-            <div v-else class="space-y-2 max-h-40 overflow-y-auto">
+            <div v-else class="max-h-40 space-y-2 overflow-y-auto">
               <div
                 v-for="cron in cronList"
                 :key="cron.id"
@@ -449,10 +449,10 @@ const steps = [
                 />
                 <label
                   :for="`cron-${cron.id}`"
-                  class="flex items-center gap-2 cursor-pointer select-none"
+                  class="flex cursor-pointer items-center gap-2 select-none"
                 >
                   <span class="text-sm">{{ cron.name }}</span>
-                  <span class="text-xs text-muted-foreground font-mono">
+                  <span class="font-mono text-xs text-muted-foreground">
                     {{ cron.cron_expression }}
                   </span>
                 </label>
@@ -476,7 +476,7 @@ const steps = [
                   class="w-38"
                   @update:model-value="dynamicSummaryRetention = $event"
                 />
-                <span class="text-sm text-muted-foreground whitespace-nowrap">
+                <span class="text-sm whitespace-nowrap text-muted-foreground">
                   {{ t("dashboard.agents.minuteUnit") }}
                 </span>
               </div>
@@ -492,7 +492,7 @@ const steps = [
                   class="w-38"
                   @update:model-value="dynamicRetention = $event"
                 />
-                <span class="text-sm text-muted-foreground whitespace-nowrap">
+                <span class="text-sm whitespace-nowrap text-muted-foreground">
                   {{ t("dashboard.agents.minuteUnit") }}
                 </span>
               </div>
@@ -509,7 +509,7 @@ const steps = [
                   class="w-38"
                   @update:model-value="staticRetention = $event"
                 />
-                <span class="text-sm text-muted-foreground whitespace-nowrap">
+                <span class="text-sm whitespace-nowrap text-muted-foreground">
                   {{ t("dashboard.agents.minuteUnit") }}
                 </span>
               </div>
@@ -525,7 +525,7 @@ const steps = [
                   class="w-38"
                   @update:model-value="agentTaskRetention = $event"
                 />
-                <span class="text-sm text-muted-foreground whitespace-nowrap">
+                <span class="text-sm whitespace-nowrap text-muted-foreground">
                   {{ t("dashboard.agents.minuteUnit") }}
                 </span>
               </div>
@@ -547,11 +547,11 @@ const steps = [
               {{ t("dashboard.agents.installSubtitle") }}
             </p>
           </div>
-          <div class="rounded-md border overflow-hidden relative">
+          <div class="relative overflow-hidden rounded-md border">
             <button
               type="button"
               @click="copyInstallScript"
-              class="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-background/80 hover:bg-background border border-border/50 hover:border-border transition-colors"
+              class="absolute top-2 right-2 z-10 rounded-md border border-border/50 bg-background/80 p-1.5 transition-colors hover:border-border hover:bg-background"
               :title="isCopied ? 'Copied!' : 'Copy to clipboard'"
             >
               <Check v-if="isCopied" class="h-4 w-4 text-green-500" />
@@ -572,7 +572,7 @@ const steps = [
         <!-- Step 4: 完成 -->
         <div
           v-if="step === 4"
-          class="flex flex-col items-center justify-center py-8 gap-4"
+          class="flex flex-col items-center justify-center gap-4 py-8"
         >
           <CircleCheckBig class="h-16 w-16 text-green-500" />
           <h3 class="text-xl font-semibold">
@@ -581,7 +581,7 @@ const steps = [
         </div>
       </div>
 
-      <DialogFooter class="px-6 pb-6 pt-2">
+      <DialogFooter class="px-6 pt-2 pb-6">
         <!-- 基础信息 -->
         <template v-if="step === 1">
           <Button :disabled="!canNext" @click="handleNext">
@@ -603,7 +603,7 @@ const steps = [
             {{ t("dashboard.agents.prev") }}
           </Button>
           <Button v-if="!isOnline" disabled>
-            <Loader2 class="h-4 w-4 mr-1.5 animate-spin" />
+            <Loader2 class="mr-1.5 h-4 w-4 animate-spin" />
             {{ t("dashboard.agents.waitingOnline") }}
           </Button>
           <Button v-else @click="handleNext">

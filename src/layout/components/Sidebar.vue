@@ -257,24 +257,24 @@ const groupedRoutes = computed<[string, SidebarRoute[]][]>(() => {
 <template>
   <aside
     :class="[
-      'flex flex-col border-r bg-background transition-all duration-300 ease-in-out shrink-0 z-50',
+      'z-50 flex shrink-0 flex-col border-r bg-background transition-all duration-300 ease-in-out',
       'fixed inset-y-0 left-0 h-full md:relative',
       props.isMobileSidebarOpen
         ? 'translate-x-0 shadow-lg md:shadow-none'
         : '-translate-x-full md:translate-x-0',
-      props.collapsed ? 'md:w-16 w-60' : 'w-60',
+      props.collapsed ? 'w-60 md:w-16' : 'w-60',
     ]"
   >
     <div
       class="flex h-14 shrink-0 items-center border-b px-3"
       :class="
         props.collapsed
-          ? 'md:justify-center justify-between'
+          ? 'justify-between md:justify-center'
           : 'justify-between'
       "
     >
       <span
-        class="text-base font-bold truncate block"
+        class="block truncate text-base font-bold"
         :class="props.collapsed ? 'md:hidden' : ''"
         >NodeGet</span
       >
@@ -304,10 +304,10 @@ const groupedRoutes = computed<[string, SidebarRoute[]][]>(() => {
       </Button>
     </div>
 
-    <nav class="flex-1 flex flex-col overflow-y-auto p-2 gap-y-3">
+    <nav class="flex flex-1 flex-col gap-y-3 overflow-y-auto p-2">
       <div v-if="isNodeRoute">
-        <div class="flex flex-col gap-y-0.5 mt-1">
-          <div :class="props.collapsed ? 'md:hidden contents' : 'contents'">
+        <div class="mt-1 flex flex-col gap-y-0.5">
+          <div :class="props.collapsed ? 'contents md:hidden' : 'contents'">
             <SidebarItem
               v-for="item in nodeRoutes"
               :key="item.path + '-full'"
@@ -336,14 +336,14 @@ const groupedRoutes = computed<[string, SidebarRoute[]][]>(() => {
       >
         <div
           v-if="group"
-          class="px-2 pt-1 text-sm font-semibold text-muted-foreground/60 uppercase tracking-wider select-none"
+          class="px-2 pt-1 text-sm font-semibold tracking-wider text-muted-foreground/60 uppercase select-none"
           :class="props.collapsed ? 'md:hidden' : ''"
         >
           {{ $t(group) }}
         </div>
         <div
           v-if="group && index > 0"
-          class="mx-2 border-t hidden"
+          class="mx-2 hidden border-t"
           :class="props.collapsed ? 'md:block' : ''"
         />
 
@@ -351,7 +351,7 @@ const groupedRoutes = computed<[string, SidebarRoute[]][]>(() => {
           class="flex flex-col gap-y-0.5"
           :class="{ 'mt-1': group && !props.collapsed }"
         >
-          <div :class="props.collapsed ? 'md:hidden contents' : 'contents'">
+          <div :class="props.collapsed ? 'contents md:hidden' : 'contents'">
             <SidebarItem
               v-for="route in routes"
               :key="route.path + '-full'"

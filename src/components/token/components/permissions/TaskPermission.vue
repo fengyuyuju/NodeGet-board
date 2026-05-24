@@ -95,7 +95,7 @@ watch(
 
 <template>
   <details class="rounded-md border p-3" :open="isOpen" @toggle="handleToggle">
-    <summary class="cursor-pointer select-none text-sm font-medium">
+    <summary class="cursor-pointer text-sm font-medium select-none">
       {{
         t(
           "dashboard.token.permissionsConfig.limitItem.permissionCard.task.title",
