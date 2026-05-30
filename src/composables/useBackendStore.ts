@@ -12,15 +12,6 @@ const LS_KEY_CURRENT = "nodeget_current_backend";
 const backends = ref<Backend[]>([]);
 const currentBackend = ref<Backend | null>(null);
 
-export const normalizeUrl = (url: string): string => {
-  try {
-    const parsed = new URL(url);
-    return `${parsed.protocol}//${parsed.host}`;
-  } catch {
-    return url;
-  }
-};
-
 const init = () => {
   // Load backends from localStorage
   const storedBackends = localStorage.getItem(LS_KEY_BACKENDS);
@@ -28,10 +19,7 @@ const init = () => {
     try {
       const parsed = JSON.parse(storedBackends);
       if (Array.isArray(parsed)) {
-        backends.value = (parsed as Backend[]).map((b) => ({
-          ...b,
-          url: normalizeUrl(b.url),
-        }));
+        backends.value = parsed as Backend[];
       }
     } catch (e) {
       console.error("Failed to parse backends from localStorage", e);
@@ -44,10 +32,7 @@ const init = () => {
     try {
       const parsed = JSON.parse(storedCurrent);
       if (parsed && typeof parsed === "object") {
-        currentBackend.value = {
-          ...(parsed as Backend),
-          url: normalizeUrl((parsed as Backend).url),
-        };
+        currentBackend.value = parsed as Backend;
       }
     } catch (e) {
       console.error("Failed to parse current backend from localStorage", e);

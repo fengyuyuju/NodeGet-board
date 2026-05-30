@@ -484,6 +484,20 @@ export default {
           },
         },
       },
+      templates: {
+        agent: {
+          title: "Agent端权限",
+          description: "为常见的Agent操作预设写入权限",
+        },
+        visitor: {
+          title: "访客权限",
+          description: "预设读取权限，以实现基本监控可见性",
+        },
+        NodePing: {
+          title: "NodeSeek Ping平台",
+          description: "为常见的Ping操作预设创建/读取权限",
+        },
+      },
     },
     extensions: {
       title: "扩展管理",

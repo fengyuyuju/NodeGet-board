@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 // import { RadioGroup, RadioGroupItem, } from '@/components/ui/radio-group'
-import { useBackendStore, normalizeUrl } from "@/composables/useBackendStore";
+import { useBackendStore } from "@/composables/useBackendStore";
 import { useBackendExtra } from "@/composables/useBackendExtra";
 import { getWsConnection } from "@/composables/useWsConnection";
 import { useThemeStore } from "@/stores/theme";
@@ -114,10 +114,12 @@ const storageLoading = ref(false);
 const fetchStorage = async () => {
   if (!backend.value) return;
   storageLoading.value = true;
+  const timeout = 30 * 1000; // 20 seconds
   try {
     storageData.value = await getWsConnection(backend.value.url).call(
       "nodeget-server_database_storage",
       { token: backend.value.token },
+      timeout,
     );
   } finally {
     storageLoading.value = false;
@@ -236,7 +238,7 @@ function saveEdit(field: string) {
       `/dashboard/servers-detail/${encodeURIComponent(editValue.value)}`,
     );
   } else if (field === "url") {
-    backends.value[idx]!.url = normalizeUrl(editValue.value);
+    backends.value[idx]!.url = editValue.value;
   } else if (field === "token") {
     backends.value[idx]!.token = editValue.value;
   }

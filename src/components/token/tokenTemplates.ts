@@ -35,6 +35,25 @@ export const VISITOR_TEMPLATE_PERMISSIONS: PermissionEntry[] = [
   { kv: { read: "metadata_*" } },
 ];
 
+export const NODEPING_TEMPLATE_PERMISSIONS: PermissionEntry[] = [
+  { task: { create: "ping" } },
+  { task: { create: "tcp_ping" } },
+  { task: { create: "http_ping" } },
+  { task: { create: "ip" } },
+  { task: { create: "dns" } },
+  { task: { create: "http_request" } },
+  { task: { create: "version" } },
+  { task: { read: "ping" } },
+  { task: { read: "tcp_ping" } },
+  { task: { read: "http_ping" } },
+  { task: { read: "ip" } },
+  { task: { read: "dns" } },
+  { task: { read: "http_request" } },
+  { task: { read: "version" } },
+  { kv: { read: "metadata_*" } },
+  { node_get: "list_all_agent_uuid" },
+];
+
 export const TOKEN_TEMPLATES: TokenTemplate[] = [
   {
     id: "agent",
@@ -55,6 +74,19 @@ export const TOKEN_TEMPLATES: TokenTemplate[] = [
       {
         scopes: [...DEFAULT_SCOPE],
         permissions: VISITOR_TEMPLATE_PERMISSIONS.map((item) => ({
+          ...item,
+        })),
+      },
+    ],
+  },
+  {
+    id: "NodePing",
+    nameKey: "dashboard.token.templates.NodePing.title",
+    descriptionKey: "dashboard.token.templates.NodePing.description",
+    token_limit: [
+      {
+        scopes: [...DEFAULT_SCOPE],
+        permissions: NODEPING_TEMPLATE_PERMISSIONS.map((item) => ({
           ...item,
         })),
       },
