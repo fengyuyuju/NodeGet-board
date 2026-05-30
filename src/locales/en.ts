@@ -498,6 +498,11 @@ export default {
           description:
             "Preset read-oriented permissions for basic monitoring visibility.",
         },
+        NodePing: {
+          title: "NodeSeek Ping Platform",
+          description:
+            "Preset creation/read permissions for common Ping operations.",
+        },
       },
     },
     extensions: {
