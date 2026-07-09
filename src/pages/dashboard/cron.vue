@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { toast } from "vue-sonner";
-import { CalendarCheck, Plus, RefreshCw } from "lucide-vue-next";
+import { CalendarCheck, Menu, Plus, RefreshCw } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CronTable from "@/components/cron/CronTable.vue";
 import CronFormDialog from "@/components/cron/CronFormDialog.vue";
 import { useCron, backendToTask, taskToCronType } from "@/composables/useCron";
+import { useCronAgentOrder } from "@/composables/useCronAgentOrder";
 import { useBackendStore } from "@/composables/useBackendStore";
 import { getWsConnection } from "@/composables/useWsConnection";
 import type { CronTask } from "@/composables/useCron";
@@ -28,9 +30,43 @@ export interface NodeItem {
 const { t } = useI18n();
 const { currentBackend } = useBackendStore();
 const cron = useCron();
+const cronAgentOrder = useCronAgentOrder();
 
 const tasks = ref<CronTask[]>([]);
 const loading = ref(false);
+
+// Task-type filter: agent / server
+type TaskKindFilter = "agent" | "server";
+const taskKindTab = ref<TaskKindFilter>("agent");
+
+// Persisted agent-task display order (task names), loaded from KV.
+const agentOrderNames = ref<string[]>([]);
+const sortable = ref(false);
+const orderSaving = ref(false);
+const orderLoading = ref(false);
+// Guards against a stale backend's late KV response overwriting the current one.
+let backendLoadId = 0;
+
+// KV-known names first (in order), unknown/new tasks appended by id.
+const sortAgentTasksByOrder = (agentTasks: CronTask[]): CronTask[] => {
+  const byName = new Map(agentTasks.map((task) => [task.name, task]));
+  const ordered = agentOrderNames.value.flatMap((name) => {
+    const task = byName.get(name);
+    if (!task) return [];
+    byName.delete(name);
+    return [task];
+  });
+  return [
+    ...ordered,
+    ...[...byName.values()].sort((a, b) => a.id - b.id),
+  ];
+};
+const filteredTasks = computed(() => {
+  const filtered = tasks.value.filter((t) => t.taskKind === taskKindTab.value);
+  return taskKindTab.value === "agent"
+    ? sortAgentTasksByOrder(filtered)
+    : filtered;
+});
 const nodes = ref<NodeItem[]>([]);
 const togglingNames = ref<string[]>([]);
 const deletingNames = ref<string[]>([]);
@@ -109,19 +145,42 @@ const loadTasks = async () => {
   }
 };
 
+const loadCronOrder = async (loadId = backendLoadId) => {
+  orderLoading.value = true;
+  try {
+    const names = await cronAgentOrder.getNames();
+    if (loadId === backendLoadId) agentOrderNames.value = names;
+  } catch {
+    if (loadId === backendLoadId) agentOrderNames.value = [];
+  } finally {
+    if (loadId === backendLoadId) orderLoading.value = false;
+  }
+};
+
 watch(
   () => [currentBackend.value?.url, currentBackend.value?.token],
   async ([url]) => {
+    const loadId = ++backendLoadId;
+    // Any backend switch must exit sort mode and drop stale order.
+    agentOrderNames.value = [];
+    sortable.value = false;
+
     if (!url) {
       tasks.value = [];
       nodes.value = [];
+      orderLoading.value = false;
       return;
     }
 
-    await Promise.all([fetchNodes(), loadTasks()]);
+    await Promise.all([fetchNodes(), loadTasks(), loadCronOrder(loadId)]);
   },
   { immediate: true },
 );
+
+// Exit sort mode when leaving the Agent tab (no auto-save).
+watch(taskKindTab, (tab) => {
+  if (tab === "server") sortable.value = false;
+});
 
 // Form dialog
 const formOpen = ref(false);
@@ -239,6 +298,44 @@ const handleUpdateNodes = async (name: string, agentIds: string[]) => {
     toast.error(e instanceof Error ? e.message : String(e));
   }
 };
+
+const handleReorder = (from: number, target: number) => {
+  if (!sortable.value || taskKindTab.value !== "agent") return;
+  const ordered = [...filteredTasks.value];
+  if (
+    from < 0 ||
+    target < 0 ||
+    from >= ordered.length ||
+    target >= ordered.length
+  ) {
+    return;
+  }
+  const moved = ordered.splice(from, 1)[0];
+  if (!moved) return;
+  ordered.splice(target, 0, moved);
+  agentOrderNames.value = ordered.map((task) => task.name);
+};
+
+const toggleSortable = async () => {
+  // Entering sort mode is instant; exiting (Save) persists the order.
+  if (!sortable.value) {
+    sortable.value = true;
+    return;
+  }
+  if (orderLoading.value || orderSaving.value) return;
+  orderSaving.value = true;
+  try {
+    const names = filteredTasks.value.map((task) => task.name);
+    await cronAgentOrder.setNames(names);
+    agentOrderNames.value = names;
+    sortable.value = false;
+    toast.success(t("dashboard.cron.sortSaved"));
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : String(e));
+  } finally {
+    orderSaving.value = false;
+  }
+};
 </script>
 
 <template>
@@ -264,18 +361,46 @@ const handleUpdateNodes = async (name: string, agentIds: string[]) => {
       </Button>
     </div>
 
+    <div class="flex items-center gap-3">
+      <Tabs v-model="taskKindTab">
+        <TabsList class="w-fit">
+          <TabsTrigger value="agent">{{
+            t("dashboard.cron.agentTaskTab")
+          }}</TabsTrigger>
+          <TabsTrigger value="server">{{
+            t("dashboard.cron.serverTaskTab")
+          }}</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <Button
+        v-if="taskKindTab === 'agent'"
+        size="sm"
+        variant="outline"
+        class="ml-auto"
+        :disabled="
+          loading || orderLoading || orderSaving || filteredTasks.length < 2
+        "
+        @click="toggleSortable"
+      >
+        <Menu class="mr-1.5 h-4 w-4" />
+        {{ sortable ? t("dashboard.cron.sortSave") : t("dashboard.cron.sortEdit") }}
+      </Button>
+    </div>
+
     <div class="rounded-md border">
       <CronTable
         :loading="loading"
-        :tasks="tasks"
+        :tasks="filteredTasks"
         :nodes="nodes"
         :toggling-names="togglingNames"
         :deleting-names="deletingNames"
+        :sortable="sortable"
         @edit="openEdit"
         @duplicate="openDuplicate"
         @delete="handleDelete"
         @toggle-enabled="handleToggle"
         @update-nodes="handleUpdateNodes"
+        @reorder="handleReorder"
       />
     </div>
 

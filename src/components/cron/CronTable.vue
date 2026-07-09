@@ -2,7 +2,7 @@
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { Copy, History, Loader2, Pencil, Trash2 } from "lucide-vue-next";
+import { Copy, GripVertical, History, Loader2, Pencil, Trash2 } from "lucide-vue-next";
 import {
   Table,
   TableHeader,
@@ -24,6 +24,7 @@ const props = defineProps<{
   togglingNames: string[];
   deletingNames: string[];
   loading?: boolean;
+  sortable?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -32,6 +33,7 @@ const emit = defineEmits<{
   delete: [name: string];
   toggleEnabled: [task: CronTask];
   updateNodes: [name: string, agentIds: string[]];
+  reorder: [from: number, target: number];
 }>();
 
 const { t } = useI18n();
@@ -125,6 +127,39 @@ const openHistory = (task: CronTask) => {
 
 const isToggling = (name: string) => props.togglingNames.includes(name);
 const isDeleting = (name: string) => props.deletingNames.includes(name);
+
+// One extra column (drag handle) is rendered while sorting.
+const tableColspan = computed(() => (props.sortable ? 8 : 7));
+
+const onDragStart = (e: DragEvent, index: number) => {
+  if (!props.sortable) return;
+  e.dataTransfer?.setData("text/plain", String(index));
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+};
+
+const onDragOver = (e: DragEvent) => {
+  if (!props.sortable) return;
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+};
+
+const onDrop = (e: DragEvent, target: number) => {
+  if (!props.sortable) return;
+  e.preventDefault();
+  const source = e.dataTransfer?.getData("text/plain") ?? "";
+  const from = source.trim() ? Number(source) : Number.NaN;
+  if (
+    !Number.isInteger(from) ||
+    from < 0 ||
+    from >= props.tasks.length ||
+    target < 0 ||
+    target >= props.tasks.length ||
+    from === target
+  ) {
+    return;
+  }
+  emit("reorder", from, target);
+};
 </script>
 
 <template>
@@ -135,21 +170,37 @@ const isDeleting = (name: string) => props.deletingNames.includes(name);
     >
       <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
-    <Table>
+    <Table class="table-fixed">
       <TableHeader>
         <TableRow>
-          <TableHead>{{ t("dashboard.cron.name") }}</TableHead>
-          <TableHead>{{ t("dashboard.cron.type") }}</TableHead>
-          <TableHead>{{ t("dashboard.cron.expression") }}</TableHead>
-          <TableHead>{{ t("dashboard.cron.nodes") }}</TableHead>
-          <TableHead>{{ t("dashboard.cron.lastRunTime") }}</TableHead>
-          <TableHead>{{ t("dashboard.cron.enabled") }}</TableHead>
-          <TableHead>{{ t("dashboard.cron.actions") }}</TableHead>
+          <TableHead v-if="sortable" class="w-[60px]" />
+          <TableHead class="w-[16%]">{{
+            t("dashboard.cron.name")
+          }}</TableHead>
+          <TableHead class="w-[26%]">{{
+            t("dashboard.cron.type")
+          }}</TableHead>
+          <TableHead class="w-[11%]">{{
+            t("dashboard.cron.expression")
+          }}</TableHead>
+          <TableHead class="w-[8%]">{{
+            t("dashboard.cron.nodes")
+          }}</TableHead>
+          <TableHead class="w-[16%]">{{
+            t("dashboard.cron.lastRunTime")
+          }}</TableHead>
+          <TableHead class="w-[8%]">{{
+            t("dashboard.cron.enabled")
+          }}</TableHead>
+          <TableHead class="w-[15%]">{{ t("dashboard.cron.actions") }}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         <TableRow v-if="loading && !tasks.length">
-          <TableCell colspan="7" class="h-32 text-center text-muted-foreground">
+          <TableCell
+            :colspan="tableColspan"
+            class="h-32 text-center text-muted-foreground"
+          >
             <div class="flex flex-col items-center justify-center space-y-3">
               <Loader2 class="w-6 h-6 animate-spin text-muted-foreground/50" />
               <span class="text-sm font-medium">{{ t("common.loading") }}</span>
@@ -158,35 +209,52 @@ const isDeleting = (name: string) => props.deletingNames.includes(name);
         </TableRow>
         <TableRow v-else-if="!tasks.length">
           <TableCell
-            colspan="7"
+            :colspan="tableColspan"
             class="text-center text-muted-foreground py-12"
           >
             {{ t("dashboard.cron.empty") }}
           </TableCell>
         </TableRow>
-        <TableRow v-for="task in tasks" :key="task.id">
-          <TableCell class="font-medium">{{ task.name }}</TableCell>
-          <TableCell>
-            <div class="flex flex-col gap-1">
+        <TableRow
+          v-for="(task, index) in tasks"
+          :key="task.id"
+          :draggable="sortable"
+          :class="sortable ? 'cursor-move select-none' : ''"
+          @dragstart="(e: DragEvent) => onDragStart(e, index)"
+          @dragover="onDragOver"
+          @drop="(e: DragEvent) => onDrop(e, index)"
+        >
+          <TableCell v-if="sortable">
+            <GripVertical class="h-4 w-4 text-muted-foreground" />
+          </TableCell>
+          <TableCell class="font-medium overflow-hidden truncate"
+            >{{ task.name }}</TableCell
+          >
+          <TableCell class="align-top overflow-hidden">
+            <div class="flex flex-col gap-1 min-w-0">
               <Badge :variant="taskKindVariant(task.taskKind)">{{
                 task.taskKind
               }}</Badge>
-              <span class="text-xs text-muted-foreground font-mono">{{
-                taskLabel(task)
-              }}</span>
+              <span
+                class="text-xs text-muted-foreground font-mono block truncate"
+                :title="taskLabel(task)"
+                >{{ taskLabel(task) }}</span
+              >
             </div>
           </TableCell>
-          <TableCell class="font-mono text-sm">{{
-            task.cronExpression
-          }}</TableCell>
-          <TableCell>
+          <TableCell
+            class="font-mono text-sm overflow-hidden truncate"
+            >{{ task.cronExpression }}</TableCell
+          >
+          <TableCell class="overflow-hidden">
             <div
               v-if="task.taskKind === 'agent'"
-              class="flex flex-col items-start gap-1"
+              class="flex flex-col items-start gap-1 min-w-0 w-full"
             >
               <Badge
                 variant="outline"
-                class="cursor-pointer hover:bg-muted"
+                class="cursor-pointer hover:bg-muted max-w-full truncate"
+                :title="nodeBadgeLabel(task)"
                 @click="openNodeSelect(task)"
               >
                 {{ nodeBadgeLabel(task) }}
@@ -194,9 +262,10 @@ const isDeleting = (name: string) => props.deletingNames.includes(name);
             </div>
             <Badge v-else variant="outline">-</Badge>
           </TableCell>
-          <TableCell class="text-sm text-muted-foreground">{{
-            formatTime(task.lastRunTime)
-          }}</TableCell>
+          <TableCell
+            class="text-sm text-muted-foreground overflow-hidden truncate"
+            >{{ formatTime(task.lastRunTime) }}</TableCell
+          >
           <TableCell>
             <button
               type="button"
