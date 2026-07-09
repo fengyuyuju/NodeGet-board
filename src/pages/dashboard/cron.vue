@@ -6,6 +6,8 @@ import { CalendarCheck, Menu, Plus, RefreshCw } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CronTable from "@/components/cron/CronTable.vue";
+import CronByNodeTable from "@/components/cron/CronByNodeTable.vue";
+import CronTaskSelectDialog from "@/components/cron/CronTaskSelectDialog.vue";
 import CronFormDialog from "@/components/cron/CronFormDialog.vue";
 import { useCron, backendToTask, taskToCronType } from "@/composables/useCron";
 import { useCronAgentOrder } from "@/composables/useCronAgentOrder";
@@ -35,9 +37,9 @@ const cronAgentOrder = useCronAgentOrder();
 const tasks = ref<CronTask[]>([]);
 const loading = ref(false);
 
-// Task-type filter: agent / server
-type TaskKindFilter = "agent" | "server";
-const taskKindTab = ref<TaskKindFilter>("agent");
+// Page view: task-centric agent/server tables, or node-centric associations.
+type CronViewTab = "agent" | "server" | "node";
+const cronViewTab = ref<CronViewTab>("agent");
 
 // Persisted agent-task display order (task names), loaded from KV.
 const agentOrderNames = ref<string[]>([]);
@@ -58,11 +60,14 @@ const sortAgentTasksByOrder = (agentTasks: CronTask[]): CronTask[] => {
   });
   return [...ordered, ...[...byName.values()].sort((a, b) => a.id - b.id)];
 };
+const agentTasks = computed(() =>
+  sortAgentTasksByOrder(
+    tasks.value.filter((task) => task.taskKind === "agent"),
+  ),
+);
 const filteredTasks = computed(() => {
-  const filtered = tasks.value.filter((t) => t.taskKind === taskKindTab.value);
-  return taskKindTab.value === "agent"
-    ? sortAgentTasksByOrder(filtered)
-    : filtered;
+  if (cronViewTab.value === "agent") return agentTasks.value;
+  return tasks.value.filter((t) => t.taskKind === cronViewTab.value);
 });
 const nodes = ref<NodeItem[]>([]);
 const togglingNames = ref<string[]>([]);
@@ -190,8 +195,8 @@ watch(
 );
 
 // Exit sort mode when leaving the Agent tab (no auto-save).
-watch(taskKindTab, (tab) => {
-  if (tab === "server") sortable.value = false;
+watch(cronViewTab, (tab) => {
+  if (tab !== "agent") sortable.value = false;
 });
 
 // Form dialog
@@ -311,8 +316,72 @@ const handleUpdateNodes = async (name: string, agentIds: string[]) => {
   }
 };
 
+// Node-centric view: pick which agent tasks link to a node.
+const nodeTaskDialogOpen = ref(false);
+const editingNode = ref<NodeItem | null>(null);
+const selectedTaskNames = ref<string[]>([]);
+const savingNodeUuid = ref<string | null>(null);
+
+watch(nodeTaskDialogOpen, (open) => {
+  if (!open) editingNode.value = null;
+});
+
+const openNodeTaskSelect = (node: NodeItem) => {
+  editingNode.value = node;
+  selectedTaskNames.value = agentTasks.value
+    .filter((task) => task.agentIds.includes(node.uuid))
+    .map((task) => task.name);
+  nodeTaskDialogOpen.value = true;
+};
+
+// Diff the node's task membership against the selection and persist only the
+// changed tasks. Sequential edits (no batch API); re-derived from the current
+// agentTasks snapshot to avoid overwriting a stale selection onto newer state.
+const handleUpdateNodeTasks = async (nextNames: string[]) => {
+  const node = editingNode.value;
+  if (!node || savingNodeUuid.value) return;
+
+  const nextNameSet = new Set(nextNames);
+  const changes = agentTasks.value.flatMap((task) => {
+    const currentlyLinked = task.agentIds.includes(node.uuid);
+    const shouldLink = nextNameSet.has(task.name);
+    if (currentlyLinked === shouldLink) return [];
+    // Only touch the current node's membership; other nodes stay intact.
+    const nextAgentIds = shouldLink
+      ? [...new Set([...task.agentIds, node.uuid])]
+      : task.agentIds.filter((id) => id !== node.uuid);
+    return [{ task, nextAgentIds }];
+  });
+
+  if (!changes.length) {
+    nodeTaskDialogOpen.value = false;
+    return;
+  }
+
+  savingNodeUuid.value = node.uuid;
+  try {
+    for (const { task, nextAgentIds } of changes) {
+      const updatedTask: CronTask = { ...task, agentIds: nextAgentIds };
+      const cron_type = taskToCronType(updatedTask);
+      await cron.edit({
+        name: task.name,
+        cron_expression: task.cronExpression,
+        cron_type,
+      });
+    }
+    await loadTasks();
+    nodeTaskDialogOpen.value = false;
+    toast.success(t("dashboard.cron.updateSuccess"));
+  } catch (e: unknown) {
+    toast.error(e instanceof Error ? e.message : String(e));
+    await loadTasks();
+  } finally {
+    savingNodeUuid.value = null;
+  }
+};
+
 const handleReorder = (from: number, target: number) => {
-  if (!sortable.value || taskKindTab.value !== "agent") return;
+  if (!sortable.value || cronViewTab.value !== "agent") return;
   const ordered = [...filteredTasks.value];
   if (
     from < 0 ||
@@ -374,7 +443,7 @@ const toggleSortable = async () => {
     </div>
 
     <div class="flex items-center gap-3">
-      <Tabs v-model="taskKindTab">
+      <Tabs v-model="cronViewTab">
         <TabsList class="w-fit">
           <TabsTrigger value="agent">{{
             t("dashboard.cron.agentTaskTab")
@@ -382,10 +451,13 @@ const toggleSortable = async () => {
           <TabsTrigger value="server">{{
             t("dashboard.cron.serverTaskTab")
           }}</TabsTrigger>
+          <TabsTrigger value="node">{{
+            t("dashboard.cron.nodeTaskTab")
+          }}</TabsTrigger>
         </TabsList>
       </Tabs>
       <Button
-        v-if="taskKindTab === 'agent'"
+        v-if="cronViewTab === 'agent'"
         size="sm"
         variant="outline"
         class="ml-auto"
@@ -403,6 +475,7 @@ const toggleSortable = async () => {
 
     <div class="rounded-md border">
       <CronTable
+        v-if="cronViewTab !== 'node'"
         :loading="loading"
         :tasks="filteredTasks"
         :nodes="nodes"
@@ -416,6 +489,14 @@ const toggleSortable = async () => {
         @update-nodes="handleUpdateNodes"
         @reorder="handleReorder"
       />
+      <CronByNodeTable
+        v-else
+        :loading="loading"
+        :nodes="nodes"
+        :agent-tasks="agentTasks"
+        :saving-node-uuid="savingNodeUuid"
+        @edit-tasks="openNodeTaskSelect"
+      />
     </div>
 
     <CronFormDialog
@@ -425,6 +506,14 @@ const toggleSortable = async () => {
       :nodes="nodes"
       :saving="saveLoading"
       @save="handleSave"
+    />
+
+    <CronTaskSelectDialog
+      v-model:open="nodeTaskDialogOpen"
+      :selected-names="selectedTaskNames"
+      :tasks="agentTasks"
+      :saving="!!savingNodeUuid"
+      @confirm="handleUpdateNodeTasks"
     />
   </div>
 </template>

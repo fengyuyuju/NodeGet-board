@@ -73,14 +73,16 @@ const handleConfirm = () => {
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent class="sm:max-w-md">
+    <DialogContent
+      class="flex flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:max-w-md"
+    >
       <DialogHeader>
         <DialogTitle>{{ t("dashboard.cron.selectNodes") }}</DialogTitle>
         <DialogDescription>{{
           t("dashboard.cron.selectNodesDesc")
         }}</DialogDescription>
       </DialogHeader>
-      <div class="max-h-72 overflow-y-auto space-y-2 py-2">
+      <div class="min-h-0 flex-1 space-y-2 overflow-y-auto py-2">
         <Button
           v-if="nodes.length > 0"
           variant="ghost"
@@ -103,18 +105,18 @@ const handleConfirm = () => {
             :model-value="localSelected.includes(node.uuid)"
             @update:model-value="(checked) => toggle(node.uuid, !!checked)"
           />
-          <div class="flex flex-col min-w-0">
-            <span class="text-sm font-medium truncate">{{
+          <div class="flex min-w-0 flex-col">
+            <span class="truncate text-sm font-medium">{{
               node.customName || node.uuid
             }}</span>
-            <span class="text-xs text-muted-foreground font-mono truncate">{{
+            <span class="truncate font-mono text-xs text-muted-foreground">{{
               node.uuid
             }}</span>
           </div>
         </div>
         <p
           v-if="!nodes.length"
-          class="text-sm text-muted-foreground text-center py-4"
+          class="py-4 text-center text-sm text-muted-foreground"
         >
           {{ t("dashboard.cron.noNodes") }}
         </p>
