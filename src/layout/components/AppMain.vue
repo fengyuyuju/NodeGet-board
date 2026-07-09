@@ -1,8 +1,8 @@
 <template>
-  <main class="flex-1 overflow-auto p-6 bg-background">
-    <router-view v-slot="{ Component }">
+  <main class="flex-1 overflow-auto bg-background p-6">
+    <router-view v-slot="{ Component, route }">
       <Transition name="page" mode="out-in">
-        <component :is="Component" />
+        <component :is="Component" v-if="Component" :key="route.path" />
       </Transition>
     </router-view>
   </main>

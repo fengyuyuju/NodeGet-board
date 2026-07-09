@@ -681,7 +681,9 @@ function scheduleRetryBackoff(entry: LoaderEntry) {
 
 function makeWrappedLoader(entry: LoaderEntry): Loader {
   return () => {
-    // 同一加载请求并发去重；若上一轮成功，inFlight 仍指向已 resolve 的 promise，复用即可。
+    // 仅对“当前加载周期”去重：in-flight 时复用同一 promise，settled 后必须释放，
+    // 否则后续导航会复用一个不属于本次导航的 settled promise，与 vue-router 的
+    // 懒加载解析边界错位（叠加 <Transition mode="out-in"> 会偶发渲染空白）。
     const inFlight = entry.inFlight;
     if (inFlight) return inFlight;
 
@@ -697,6 +699,7 @@ function makeWrappedLoader(entry: LoaderEntry): Loader {
     entry.inFlight = p;
     p.then(
       () => {
+        clearInFlightLoader(entry, p);
         loaderRegistry.markLoaded(entry);
         entry.prefetchAttempts = 0;
         entry.prefetchRetryAt = undefined;
