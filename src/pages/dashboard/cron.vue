@@ -56,10 +56,7 @@ const sortAgentTasksByOrder = (agentTasks: CronTask[]): CronTask[] => {
     byName.delete(name);
     return [task];
   });
-  return [
-    ...ordered,
-    ...[...byName.values()].sort((a, b) => a.id - b.id),
-  ];
+  return [...ordered, ...[...byName.values()].sort((a, b) => a.id - b.id)];
 };
 const filteredTasks = computed(() => {
   const filtered = tasks.value.filter((t) => t.taskKind === taskKindTab.value);
@@ -111,23 +108,38 @@ const fetchNodes = async () => {
       { namespace: string; key: string; value: unknown }[]
     >("kv_get_multi_value", {
       token: currentBackend.value.token,
-      namespace_key: uuids.map((uuid) => ({
-        namespace: uuid,
-        key: "metadata_name",
-      })),
+      namespace_key: uuids.flatMap((uuid) => [
+        { namespace: uuid, key: "metadata_name" },
+        { namespace: uuid, key: "metadata_order" },
+      ]),
     });
 
     const nameMap = new Map<string, string>();
+    const orderMap = new Map<string, number>();
     for (const item of Array.isArray(kvResult) ? kvResult : []) {
       if (item.key === "metadata_name") {
         nameMap.set(item.namespace, String(item.value ?? ""));
+      } else if (item.key === "metadata_order") {
+        const order = Number(item.value);
+        if (!isNaN(order)) orderMap.set(item.namespace, order);
       }
     }
 
-    nodes.value = uuids.map((uuid) => ({
-      uuid,
-      customName: nameMap.get(uuid) ?? "",
-    }));
+    nodes.value = uuids
+      .map((uuid) => ({
+        uuid,
+        customName: nameMap.get(uuid) ?? "",
+        order: orderMap.get(uuid),
+      }))
+      .sort((a, b) => {
+        const aHas = a.order != null;
+        const bHas = b.order != null;
+        if (aHas && !bHas) return -1;
+        if (!aHas && bHas) return 1;
+        if (aHas && bHas) return a.order! - b.order!;
+        return a.uuid.localeCompare(b.uuid);
+      })
+      .map(({ uuid, customName }) => ({ uuid, customName }));
   } catch {
     nodes.value = [];
   }
@@ -343,20 +355,20 @@ const toggleSortable = async () => {
     <div class="flex items-start justify-between">
       <div>
         <h1 class="text-2xl font-semibold">{{ t("dashboard.cron.title") }}</h1>
-        <p class="text-sm text-muted-foreground mt-1">
+        <p class="mt-1 text-sm text-muted-foreground">
           {{ t("dashboard.cron.desc") }}
         </p>
       </div>
       <Button
         variant="outline"
         :disabled="loading"
-        class="ml-auto mr-2"
+        class="mr-2 ml-auto"
         @click="() => loadTasks()"
       >
         <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" />
       </Button>
       <Button @click="openCreate">
-        <Plus class="h-4 w-4 mr-1.5" />
+        <Plus class="mr-1.5 h-4 w-4" />
         {{ t("dashboard.cron.create") }}
       </Button>
     </div>
@@ -383,7 +395,9 @@ const toggleSortable = async () => {
         @click="toggleSortable"
       >
         <Menu class="mr-1.5 h-4 w-4" />
-        {{ sortable ? t("dashboard.cron.sortSave") : t("dashboard.cron.sortEdit") }}
+        {{
+          sortable ? t("dashboard.cron.sortSave") : t("dashboard.cron.sortEdit")
+        }}
       </Button>
     </div>
 
