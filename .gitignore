@@ -47,3 +47,6 @@ src/types/typed-router.d.ts
 
 # Git worktrees
 .worktrees
+
+# llmdoc scratch (temporary investigation artifacts, not stable docs)
+.llmdoc-tmp/
