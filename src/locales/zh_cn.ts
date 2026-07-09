@@ -794,7 +794,7 @@ export default {
       serverTask: "Server 任务",
       agentTaskTab: "Agent",
       serverTaskTab: "Server",
-      nodeTaskTab: "节点",
+      nodeTaskTab: "Node",
       nodeName: "节点",
       linkedTasks: "关联任务",
       selectTasks: "选择任务",
