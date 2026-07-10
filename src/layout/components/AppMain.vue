@@ -25,7 +25,7 @@ const routeKey = computed(() => {
 <template>
   <main class="flex-1 overflow-auto bg-background p-6">
     <router-view v-slot="{ Component }">
-      <Transition name="page" mode="out-in">
+      <Transition name="page">
         <component :is="Component" v-if="Component" :key="routeKey" />
       </Transition>
     </router-view>
