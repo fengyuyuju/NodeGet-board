@@ -9,7 +9,7 @@ const routeKey = computed(() => {
   const record = route.matched[2];
   if (!record) return route.path;
 
-  const paramNames = [...record.path.matchAll(/:(\w+)/g)].map((m) => m[1]);
+  const paramNames = [...record.path.matchAll(/:(\w+)/g)].map((m) => m[1]!);
   if (paramNames.length === 0) return record.path;
 
   const resolved = Object.fromEntries(
