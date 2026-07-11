@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useRoute } from "vue-router";
 import { Box } from "lucide-vue-next";
+
+const route = useRoute("/dashboard/app-panel/[id]");
 
 definePage({
   redirect: "/dashboard/app-panel/list",
@@ -13,5 +16,5 @@ definePage({
 </script>
 
 <template>
-  <router-view />
+  <router-view :key="String(route.params.id)" />
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { toast } from "vue-sonner";
 import { useStaticBucketFile } from "@/composables/useStaticBucketFile";
@@ -15,7 +15,7 @@ const route = useRoute("/dashboard/bucket/[name]");
 const router = useRouter();
 const bucketFile = useStaticBucketFile();
 
-const bucketName = (route.params as { name: string }).name;
+const bucketName = computed(() => String(route.params.name));
 
 const deletingFilePath = ref<string | null>(null);
 const savingFile = ref(false);
@@ -30,14 +30,31 @@ const uploadDirError = ref<string | null>(null);
 
 const fileViewRef = ref<InstanceType<typeof StaticBucketFileView> | null>(null);
 
-onMounted(() => bucketFile.fetchList(bucketName));
+watch(
+  bucketName,
+  (name) => {
+    bucketFile.clearFiles();
+    deletingFilePath.value = null;
+    savingFile.value = false;
+    uploadFileOpen.value = false;
+    uploadFileLoading.value = false;
+    uploadFileError.value = null;
+    uploadDirOpen.value = false;
+    uploadDirLoading.value = false;
+    uploadDirError.value = null;
+    bucketFile.fetchList(name);
+  },
+  { immediate: true },
+);
 
-const downloadBucketZip = () => bucketFile.downloadBucketZip(bucketName);
+const downloadBucketZip = () => bucketFile.downloadBucketZip(bucketName.value);
 
 const handleReadFile = async (path: string) => {
   if (!fileViewRef.value) return;
+  const name = bucketName.value;
   try {
-    const base64 = await bucketFile.readFile(bucketName, path);
+    const base64 = await bucketFile.readFile(name, path);
+    if (name !== bucketName.value) return;
     const buf = base64ToBuf(base64);
     if (isBinaryBuffer(buf)) {
       fileViewRef.value.onFileContentUnsupported();
@@ -45,6 +62,7 @@ const handleReadFile = async (path: string) => {
     }
     fileViewRef.value.onFileContentLoaded(new TextDecoder().decode(buf));
   } catch (e: unknown) {
+    if (name !== bucketName.value) return;
     fileViewRef.value?.onFileContentError(
       e instanceof Error ? e.message : String(e),
     );
@@ -52,10 +70,11 @@ const handleReadFile = async (path: string) => {
 };
 
 const handleSaveFile = async (path: string, content: string) => {
+  const name = bucketName.value;
   savingFile.value = true;
   try {
     const base64 = bufToBase64(new TextEncoder().encode(content));
-    await bucketFile.uploadFile(bucketName, path, base64);
+    await bucketFile.uploadFile(name, path, base64);
     toast.success("已保存");
   } catch (e: unknown) {
     toast.error(e instanceof Error ? e.message : "保存失败");
@@ -66,12 +85,14 @@ const handleSaveFile = async (path: string, content: string) => {
 
 const handleReplaceFile = async (path: string, base64: string) => {
   if (!fileViewRef.value) return;
+  const name = bucketName.value;
   savingFile.value = true;
   try {
-    await bucketFile.uploadFile(bucketName, path, base64);
+    await bucketFile.uploadFile(name, path, base64);
+    if (name !== bucketName.value) return;
     toast.success("已上传替换");
     await handleReadFile(path);
-    await bucketFile.fetchList(bucketName);
+    await bucketFile.fetchList(name);
   } catch (e: unknown) {
     toast.error(e instanceof Error ? e.message : "上传失败");
   } finally {
@@ -80,8 +101,9 @@ const handleReplaceFile = async (path: string, base64: string) => {
 };
 
 const handleDownloadFile = async (path: string) => {
+  const name = bucketName.value;
   try {
-    const base64 = await bucketFile.readFile(bucketName, path);
+    const base64 = await bucketFile.readFile(name, path);
     triggerBlobDownload(
       new Blob([base64ToBuf(base64).buffer as ArrayBuffer], {
         type: "application/octet-stream",
@@ -94,22 +116,25 @@ const handleDownloadFile = async (path: string) => {
 };
 
 const handleRenameFile = async (from: string, to: string) => {
+  const name = bucketName.value;
   if (bucketFile.files.value.some((f) => f.path === to)) {
     toast.error("目标路径已存在同名文件");
     return;
   }
   try {
-    await bucketFile.renameFile(bucketName, from, to);
-    await bucketFile.fetchList(bucketName);
+    await bucketFile.renameFile(name, from, to);
+    if (name !== bucketName.value) return;
+    await bucketFile.fetchList(name);
   } catch (e: unknown) {
     toast.error(e instanceof Error ? e.message : "移动失败");
   }
 };
 
 const handleDeleteFile = async (path: string) => {
+  const name = bucketName.value;
   deletingFilePath.value = path;
   try {
-    await bucketFile.deleteFile(bucketName, path);
+    await bucketFile.deleteFile(name, path);
     toast.success(`「${path}」已删除`);
   } catch (e: unknown) {
     toast.error(e instanceof Error ? e.message : "删除失败");
@@ -119,13 +144,15 @@ const handleDeleteFile = async (path: string) => {
 };
 
 const handleUploadFile = async (path: string, base64: string) => {
+  const name = bucketName.value;
   uploadFileError.value = null;
   uploadFileLoading.value = true;
   try {
-    await bucketFile.uploadFile(bucketName, path, base64);
+    await bucketFile.uploadFile(name, path, base64);
+    if (name !== bucketName.value) return;
     toast.success(`文件「${path}」上传成功`);
     uploadFileOpen.value = false;
-    await bucketFile.fetchList(bucketName);
+    await bucketFile.fetchList(name);
   } catch (e: unknown) {
     uploadFileError.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -136,18 +163,17 @@ const handleUploadFile = async (path: string, base64: string) => {
 const handleUploadDir = async (
   files: Array<{ path: string; base64: string }>,
 ) => {
+  const name = bucketName.value;
   uploadDirLoading.value = true;
   uploadDirError.value = null;
   try {
-    const { uploaded, deleted } = await bucketFile.syncBucketDir(
-      bucketName,
-      files,
-    );
+    const { uploaded, deleted } = await bucketFile.syncBucketDir(name, files);
+    if (name !== bucketName.value) return;
     toast.success(
-      `已同步到「${bucketName}」：上传 ${uploaded} 个，删除 ${deleted} 个`,
+      `已同步到「${name}」：上传 ${uploaded} 个，删除 ${deleted} 个`,
     );
     uploadDirOpen.value = false;
-    await bucketFile.fetchList(bucketName);
+    await bucketFile.fetchList(name);
   } catch (e: unknown) {
     uploadDirError.value = e instanceof Error ? e.message : String(e);
   } finally {
@@ -157,9 +183,10 @@ const handleUploadDir = async (
 </script>
 
 <template>
-  <div class="h-full flex flex-col overflow-hidden">
+  <div class="flex h-full flex-col overflow-hidden">
     <StaticBucketFileView
       ref="fileViewRef"
+      :key="bucketName"
       class="flex-1 overflow-hidden"
       :bucket-name="bucketName"
       :files="bucketFile.files.value"

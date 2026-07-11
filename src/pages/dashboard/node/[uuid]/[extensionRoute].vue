@@ -38,7 +38,7 @@ watch(
       iframeUrl.value = "";
       return;
     }
-    iframeUrl.value = await getIframeUrl(
+    const url = await getIframeUrl(
       m.ext.id,
       m.route.entry,
       m.ext.token,
@@ -46,6 +46,11 @@ watch(
       m.ext.worker_name,
       m.ext.storage,
     );
+    // Discard stale result if the user navigated to a different extension route.
+    const current = matched.value;
+    if (current?.ext.id !== m.ext.id || current?.route.name !== m.route.name)
+      return;
+    iframeUrl.value = url;
   },
   { immediate: true },
 );

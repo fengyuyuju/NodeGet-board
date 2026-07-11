@@ -27,18 +27,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col gap-4 p-6 overflow-hidden">
-    <div class="flex items-center gap-3 shrink-0">
+  <div class="flex h-full flex-col gap-4 overflow-hidden p-6">
+    <div class="flex shrink-0 items-center gap-3">
       <Button
         variant="ghost"
         size="sm"
         @click="router.push('/dashboard/theme-management')"
       >
-        <ArrowLeft class="h-4 w-4 mr-1" />
+        <ArrowLeft class="mr-1 h-4 w-4" />
         返回
       </Button>
       <h2 class="text-xl font-semibold">{{ themeName }}</h2>
     </div>
-    <ThemeDetail :bucket-name="bucketName" class="flex-1 overflow-y-auto" />
+    <ThemeDetail
+      :key="bucketName"
+      :bucket-name="bucketName"
+      class="flex-1 overflow-y-auto"
+    />
   </div>
 </template>

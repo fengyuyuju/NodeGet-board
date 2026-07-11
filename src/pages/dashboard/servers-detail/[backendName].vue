@@ -60,6 +60,7 @@ const isActive = computed(
 // --- Basic Info ---
 const serverUuid = ref<string | null>(null);
 const serverVersion = ref<string | null>(null);
+let infoGeneration = 0;
 
 interface ServerVersionInfo {
   cargo_version: string;
@@ -68,12 +69,14 @@ interface ServerVersionInfo {
 
 const fetchBasicInfo = async () => {
   if (!backend.value) return;
+  const gen = ++infoGeneration;
   const conn = getWsConnection(backend.value.url);
   try {
     const [uuid, ver] = await Promise.all([
       conn.call<string>("nodeget-server_uuid", []),
       conn.call<ServerVersionInfo>("nodeget-server_version", []),
     ]);
+    if (gen !== infoGeneration) return;
     serverUuid.value = uuid;
     serverVersion.value = `${ver.cargo_version}-${ver.git_commit_sha}`;
   } catch {}
@@ -84,25 +87,26 @@ const configContent = ref("");
 const configLoading = ref(false);
 const configSaving = ref(false);
 const configLoaded = ref(false);
+let configGeneration = 0;
 
 const fetchConfig = async () => {
   if (!backend.value || configLoaded.value) return;
+  const gen = ++configGeneration;
   configLoading.value = true;
   try {
     const result = await getWsConnection(backend.value.url).call<unknown>(
       "nodeget-server_read_config",
       { token: backend.value.token },
     );
+    if (gen !== configGeneration) return;
     configContent.value =
       typeof result === "string" ? result : JSON.stringify(result, null, 2);
     configLoaded.value = true;
   } catch {
   } finally {
-    configLoading.value = false;
+    if (gen === configGeneration) configLoading.value = false;
   }
 };
-
-fetchConfig();
 
 // --- Database storage ---
 const storageData = ref<{
@@ -110,19 +114,26 @@ const storageData = ref<{
   total: number;
 } | null>(null);
 const storageLoading = ref(false);
+let storageGeneration = 0;
 
 const fetchStorage = async () => {
   if (!backend.value) return;
+  const gen = ++storageGeneration;
   storageLoading.value = true;
   const timeout = 30 * 1000; // 20 seconds
   try {
-    storageData.value = await getWsConnection(backend.value.url).call(
+    const data = await getWsConnection(backend.value.url).call<{
+      tables: Record<string, number>;
+      total: number;
+    }>(
       "nodeget-server_database_storage",
       { token: backend.value.token },
       timeout,
     );
+    if (gen !== storageGeneration) return;
+    storageData.value = data;
   } finally {
-    storageLoading.value = false;
+    if (gen === storageGeneration) storageLoading.value = false;
   }
 };
 
@@ -154,10 +165,27 @@ const saveConfig = async () => {
   }
 };
 
+let lastBackendKey = "";
+
 watch(
   backend,
   (b) => {
-    if (b) fetchBasicInfo();
+    if (!b) return;
+    const key = `${b.url}:::${b.token}`;
+    if (key !== lastBackendKey) {
+      lastBackendKey = key;
+      configLoaded.value = false;
+      configContent.value = "";
+      storageData.value = null;
+      serverUuid.value = null;
+      serverVersion.value = null;
+      // Invalidate any in-flight requests so stale responses are discarded.
+      infoGeneration++;
+      configGeneration++;
+      storageGeneration++;
+    }
+    fetchBasicInfo();
+    fetchConfig();
   },
   { immediate: true },
 );

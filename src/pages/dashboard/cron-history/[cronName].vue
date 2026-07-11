@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { toast } from "vue-sonner";
@@ -100,22 +100,26 @@ const buildCondition = () => {
   return condition;
 };
 
-const loadData = async () => {
-  if (loading.value) return;
+let loadGeneration = 0;
 
+const loadData = async () => {
+  const generation = ++loadGeneration;
   loading.value = true;
   try {
     const condition = buildCondition();
     const result = await query(condition);
+    // Discard stale responses from a superseded cron or a newer manual search.
+    if (generation !== loadGeneration) return;
     allRecords.value = result;
     currentPage.value = 1;
   } catch (error) {
+    if (generation !== loadGeneration) return;
     console.error("Failed to load cron history:", error);
     toast.error(t("common.error"), {
       description: String(error),
     });
   } finally {
-    loading.value = false;
+    if (generation === loadGeneration) loading.value = false;
   }
 };
 
@@ -158,9 +162,17 @@ const goBack = () => {
   router.push({ name: "/dashboard/cron" });
 };
 
-onMounted(() => {
-  loadData();
-});
+watch(
+  cronName,
+  () => {
+    allRecords.value = [];
+    currentPage.value = 1;
+    detailOpen.value = false;
+    selectedRecord.value = null;
+    loadData();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

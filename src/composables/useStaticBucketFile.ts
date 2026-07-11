@@ -22,11 +22,17 @@ export function useStaticBucketFile(
   const loading = ref(false);
   const error = ref<string | null>(null);
 
+  // Tracks the bucket the page currently expects to display. In-flight RPCs
+  // whose bucket no longer matches discard their results to avoid overwriting
+  // the active bucket's list with a stale response.
+  let activeBucketName = "";
+
   const rpc = <T>(method: string, params: unknown): Promise<T> =>
     getWsConnection(backendUrl.value).call<T>(method, params);
 
   const fetchList = async (bucketName: string): Promise<BucketFile[]> => {
     if (!backendUrl.value) return [];
+    activeBucketName = bucketName;
     loading.value = true;
     error.value = null;
     try {
@@ -34,14 +40,16 @@ export function useStaticBucketFile(
         token: backendToken.value,
         name: bucketName,
       });
+      if (activeBucketName !== bucketName) return [];
       files.value = Array.isArray(list) ? list : [];
       return files.value;
     } catch (e: unknown) {
+      if (activeBucketName !== bucketName) return [];
       error.value = e instanceof Error ? e.message : String(e);
       files.value = [];
       return [];
     } finally {
-      loading.value = false;
+      if (activeBucketName === bucketName) loading.value = false;
     }
   };
 
@@ -78,6 +86,7 @@ export function useStaticBucketFile(
       name: bucketName,
       path,
     });
+    if (activeBucketName !== bucketName) return;
     files.value = files.value.filter((f) => f.path !== path);
   };
 
@@ -92,6 +101,7 @@ export function useStaticBucketFile(
       from,
       to,
     });
+    if (activeBucketName !== bucketName) return;
     files.value = files.value.map((f) =>
       f.path === from ? { ...f, path: to } : f,
     );

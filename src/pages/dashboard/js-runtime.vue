@@ -19,7 +19,7 @@ definePage({
 });
 
 const { t } = useI18n();
-const route = useRoute();
+const route = useRoute("/dashboard/js-runtime/[id]");
 const runtime = useJsRuntime();
 
 const deletingIds = ref<string[]>([]);
@@ -87,7 +87,7 @@ const deleteWorkerFun = async (name: string) => {
         <h1 class="text-2xl font-semibold">
           {{ t("dashboard.jsRuntime.title") }}
         </h1>
-        <p class="text-sm text-muted-foreground mt-1">
+        <p class="mt-1 text-sm text-muted-foreground">
           {{ t("dashboard.jsRuntime.desc") }}
         </p>
       </div>
@@ -123,5 +123,5 @@ const deleteWorkerFun = async (name: string) => {
       @save="addWorkerFun"
     />
   </div>
-  <router-view v-else />
+  <router-view v-else :key="String(route.params.id)" />
 </template>
