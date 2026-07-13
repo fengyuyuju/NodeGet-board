@@ -51,10 +51,10 @@ const rows = computed(() =>
     <Table class="min-w-[560px] table-fixed">
       <TableHeader>
         <TableRow>
-          <TableHead class="w-[15%]">{{
+          <TableHead class="w-[25%]">{{
             t("dashboard.cron.nodeName")
           }}</TableHead>
-          <TableHead class="w-[75%]">{{
+          <TableHead class="w-[65%]">{{
             t("dashboard.cron.linkedTasks")
           }}</TableHead>
           <TableHead class="w-[10%] text-center">{{
