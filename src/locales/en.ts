@@ -764,6 +764,7 @@ export default {
       selectAll: "Select All",
       deselectAll: "Deselect All",
       expression: "Cron Expression",
+      expressionColumn: "Cron",
       expressionHint:
         "Spaces are normalized automatically. Compact input like 2***** becomes 2 * * * * *.",
       expressionFormatHint:

@@ -2,7 +2,14 @@
 import { computed, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { Copy, GripVertical, History, Loader2, Pencil, Trash2 } from "lucide-vue-next";
+import {
+  Copy,
+  GripVertical,
+  History,
+  Loader2,
+  Pencil,
+  Trash2,
+} from "lucide-vue-next";
 import {
   Table,
   TableHeader,
@@ -166,33 +173,29 @@ const onDrop = (e: DragEvent, target: number) => {
   <div class="relative w-full">
     <div
       v-if="loading && tasks.length"
-      class="absolute inset-0 z-10 bg-background/40 backdrop-blur-[1px] flex flex-col items-center justify-center rounded-md"
+      class="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-md bg-background/40 backdrop-blur-[1px]"
     >
       <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
-    <Table class="table-fixed">
+    <Table class="min-w-[900px] table-fixed">
       <TableHeader>
         <TableRow>
           <TableHead v-if="sortable" class="w-[60px]" />
-          <TableHead class="w-[16%]">{{
-            t("dashboard.cron.name")
-          }}</TableHead>
-          <TableHead class="w-[26%]">{{
-            t("dashboard.cron.type")
-          }}</TableHead>
+          <TableHead class="w-[16%]">{{ t("dashboard.cron.name") }}</TableHead>
+          <TableHead class="w-[26%]">{{ t("dashboard.cron.type") }}</TableHead>
           <TableHead class="w-[11%]">{{
-            t("dashboard.cron.expression")
+            t("dashboard.cron.expressionColumn")
           }}</TableHead>
-          <TableHead class="w-[8%]">{{
-            t("dashboard.cron.nodes")
-          }}</TableHead>
+          <TableHead class="w-[8%]">{{ t("dashboard.cron.nodes") }}</TableHead>
           <TableHead class="w-[16%]">{{
             t("dashboard.cron.lastRunTime")
           }}</TableHead>
           <TableHead class="w-[8%]">{{
             t("dashboard.cron.enabled")
           }}</TableHead>
-          <TableHead class="w-[15%]">{{ t("dashboard.cron.actions") }}</TableHead>
+          <TableHead class="w-[15%]">{{
+            t("dashboard.cron.actions")
+          }}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -202,7 +205,7 @@ const onDrop = (e: DragEvent, target: number) => {
             class="h-32 text-center text-muted-foreground"
           >
             <div class="flex flex-col items-center justify-center space-y-3">
-              <Loader2 class="w-6 h-6 animate-spin text-muted-foreground/50" />
+              <Loader2 class="h-6 w-6 animate-spin text-muted-foreground/50" />
               <span class="text-sm font-medium">{{ t("common.loading") }}</span>
             </div>
           </TableCell>
@@ -210,7 +213,7 @@ const onDrop = (e: DragEvent, target: number) => {
         <TableRow v-else-if="!tasks.length">
           <TableCell
             :colspan="tableColspan"
-            class="text-center text-muted-foreground py-12"
+            class="py-12 text-center text-muted-foreground"
           >
             {{ t("dashboard.cron.empty") }}
           </TableCell>
@@ -227,33 +230,32 @@ const onDrop = (e: DragEvent, target: number) => {
           <TableCell v-if="sortable">
             <GripVertical class="h-4 w-4 text-muted-foreground" />
           </TableCell>
-          <TableCell class="font-medium overflow-hidden truncate"
-            >{{ task.name }}</TableCell
-          >
-          <TableCell class="align-top overflow-hidden">
-            <div class="flex flex-col gap-1 min-w-0">
+          <TableCell class="truncate overflow-hidden font-medium">{{
+            task.name
+          }}</TableCell>
+          <TableCell class="overflow-hidden align-top">
+            <div class="flex min-w-0 flex-col gap-1">
               <Badge :variant="taskKindVariant(task.taskKind)">{{
                 task.taskKind
               }}</Badge>
               <span
-                class="text-xs text-muted-foreground font-mono block truncate"
+                class="block truncate font-mono text-xs text-muted-foreground"
                 :title="taskLabel(task)"
                 >{{ taskLabel(task) }}</span
               >
             </div>
           </TableCell>
-          <TableCell
-            class="font-mono text-sm overflow-hidden truncate"
-            >{{ task.cronExpression }}</TableCell
-          >
+          <TableCell class="truncate overflow-hidden font-mono text-sm">{{
+            task.cronExpression
+          }}</TableCell>
           <TableCell class="overflow-hidden">
             <div
               v-if="task.taskKind === 'agent'"
-              class="flex flex-col items-start gap-1 min-w-0 w-full"
+              class="flex w-full min-w-0 flex-col items-start gap-1"
             >
               <Badge
                 variant="outline"
-                class="cursor-pointer hover:bg-muted max-w-full truncate"
+                class="max-w-full cursor-pointer truncate hover:bg-muted"
                 :title="nodeBadgeLabel(task)"
                 @click="openNodeSelect(task)"
               >
@@ -263,7 +265,7 @@ const onDrop = (e: DragEvent, target: number) => {
             <Badge v-else variant="outline">-</Badge>
           </TableCell>
           <TableCell
-            class="text-sm text-muted-foreground overflow-hidden truncate"
+            class="truncate overflow-hidden text-sm text-muted-foreground"
             >{{ formatTime(task.lastRunTime) }}</TableCell
           >
           <TableCell>
@@ -275,7 +277,7 @@ const onDrop = (e: DragEvent, target: number) => {
               :disabled="isToggling(task.name)"
               :class="
                 cn(
-                  'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none',
                   task.enabled ? 'bg-primary' : 'bg-input',
                   isToggling(task.name)
                     ? 'cursor-not-allowed opacity-50'

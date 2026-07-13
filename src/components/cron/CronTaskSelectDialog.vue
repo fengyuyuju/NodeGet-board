@@ -83,7 +83,7 @@ const handleConfirm = () => {
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent
-      class="flex flex-col overflow-hidden sm:max-h-[calc(100dvh-2rem)] sm:max-w-md"
+      class="flex flex-col overflow-hidden sm:max-h-[50dvh] sm:max-w-md"
       @escape-key-down="saving && $event.preventDefault()"
       @interact-outside="saving && $event.preventDefault()"
     >

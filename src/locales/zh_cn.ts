@@ -749,6 +749,7 @@ export default {
       selectAll: "全选",
       deselectAll: "取消全选",
       expression: "Cron 表达式",
+      expressionColumn: "Cron",
       expressionHint: "会自动整理空格，紧凑写法如 2***** 会转换为 2 * * * * *",
       expressionFormatHint:
         "最终格式固定为 6 段；如果后面的段没填，失焦后会自动补成 *。",

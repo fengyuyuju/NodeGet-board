@@ -48,7 +48,7 @@ const rows = computed(() =>
     >
       <Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
-    <Table class="table-fixed">
+    <Table class="min-w-[560px] table-fixed">
       <TableHeader>
         <TableRow>
           <TableHead class="w-[15%]">{{
