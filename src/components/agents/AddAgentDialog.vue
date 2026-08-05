@@ -9,6 +9,7 @@ import {
   Copy,
   Check,
 } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,6 +35,7 @@ import { useKv } from "@/composables/useKv";
 import { useBackendExtra } from "@/composables/useBackendExtra";
 import { useLifecycle } from "@/composables/useLifecycle";
 import { reGenerateToken } from "@/components/agents/generateToken";
+import { agentTokenTargets } from "@/lib/agentToken";
 
 const open = defineModel<boolean>("open", { required: true });
 const emit = defineEmits<{
@@ -44,6 +46,7 @@ const { t } = useI18n();
 const router = useRouter();
 const themeStore = useThemeStore();
 const { currentBackendInfo } = useBackendExtra();
+const { currentBackend } = useBackendStore();
 const { list: listCrons } = useCron();
 const { afterAgentCreate } = useLifecycle();
 const kv = useKv();
@@ -55,17 +58,42 @@ const nodeName = ref("");
 const nodeUuid = ref(crypto.randomUUID());
 
 const generateUuid = () => {
+  purgeGeneratedToken();
   nodeUuid.value = crypto.randomUUID();
 };
 
 // 预生成的 token
 const generatedToken = ref("");
+// token 生成中，防止重复点击
+const generatingToken = ref(false);
+// token 随安装命令曝光（进入过 step 3）后可能已被被控使用，禁止再清理
+const tokenExposed = ref(false);
+
+// 未曝光的 token 被放弃时，尽力清理，避免遗留孤儿 token
+const purgeGeneratedToken = () => {
+  if (!generatedToken.value) return;
+  if (!tokenExposed.value) {
+    const backend = currentBackend.value;
+    if (backend) {
+      const conn = getWsConnection(backend.url);
+      for (const target_token of agentTokenTargets(nodeUuid.value)) {
+        conn
+          .call("token_delete", { token: backend.token, target_token })
+          .catch(() => {});
+      }
+    }
+  }
+  generatedToken.value = "";
+};
 
 const resetForm = () => {
+  purgeGeneratedToken();
   step.value = 1;
   nodeName.value = "";
   nodeUuid.value = crypto.randomUUID();
   generatedToken.value = "";
+  generatingToken.value = false;
+  tokenExposed.value = false;
   selectedCronIds.value = new Set();
   staticRetention.value = 60 * 24 * 365; // minute
   dynamicRetention.value = 60 * 6; // minute
@@ -266,11 +294,29 @@ const canNext = computed(() => {
 
 const handleNext = async () => {
   if (step.value === 1) {
-    // 预生成 token
-    generatedToken.value = (await reGenerateToken(nodeUuid.value)) || "";
-    step.value = 2;
-    loadCrons();
+    // 预生成 token，失败则停留本步
+    if (generatingToken.value) return;
+    generatingToken.value = true;
+    try {
+      const { token, error } = await reGenerateToken(nodeUuid.value);
+      if (!token) {
+        toast.error(t("dashboard.agents.tokenGenerateFailed"), {
+          description: error ?? undefined,
+        });
+        return;
+      }
+      generatedToken.value = token;
+      step.value = 2;
+      loadCrons();
+    } finally {
+      generatingToken.value = false;
+    }
   } else if (step.value === 2) {
+    if (!generatedToken.value) {
+      toast.error(t("dashboard.agents.tokenRequired"));
+      return;
+    }
+    tokenExposed.value = true;
     step.value = 3;
     startPolling();
   } else if (step.value === 3) {
@@ -314,7 +360,7 @@ watch(
 
 watch(open, (value) => {
   if (value) {
-    generateUuid();
+    resetForm();
   } else {
     stopPolling();
   }
@@ -584,7 +630,7 @@ const steps = [
       <DialogFooter class="px-6 pt-2 pb-6">
         <!-- 基础信息 -->
         <template v-if="step === 1">
-          <Button :disabled="!canNext" @click="handleNext">
+          <Button :disabled="!canNext || generatingToken" @click="handleNext">
             {{ t("dashboard.agents.next") }}
           </Button>
         </template>

@@ -104,12 +104,11 @@ watch(
     form.value.ignore_cert = !!props.upstream.ignore_cert;
 
     // preGenerateToken(props.nodeUUID, ref(target as ServerInfo))
-    //   .then(token => {
-    //     if(token){
+    //   .then(({ token }) => {
+    //     if (token) {
     //       form.value.token = token
     //     }
     //   })
-    //   .catch(() => null)
   },
   {
     immediate: true,

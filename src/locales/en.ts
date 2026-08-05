@@ -732,6 +732,8 @@ export default {
       fieldServerName: "Server Name",
       next: "Next",
       prev: "Previous",
+      tokenGenerateFailed: "Failed to pre-generate token. Please retry.",
+      tokenRequired: "Token is required before continuing.",
       cronSection: "Enable Cron",
       storageSection: "Data Retention",
       staticMonitoring: "static_monitoring retention",

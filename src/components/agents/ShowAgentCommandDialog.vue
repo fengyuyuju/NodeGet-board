@@ -54,18 +54,15 @@ const { createVersionTask } = useTask();
 // 预生成的 token
 const generatedToken = ref("");
 
-reGenerateToken(props.uuid)
-  .then((newToken) => {
-    if (!newToken) {
-      toast.error("预生成 token 失败，可能会导致安装失败，请重试");
-      return;
-    }
-    generatedToken.value = newToken;
-  })
-  .catch((e) => {
-    console.error("Failed to pre-generate token:", e);
-    toast.error("预生成 token 失败，可能会导致安装失败，请重试");
-  });
+reGenerateToken(props.uuid).then(({ token, error }) => {
+  if (!token) {
+    toast.error(t("dashboard.agents.tokenGenerateFailed"), {
+      description: error ?? undefined,
+    });
+    return;
+  }
+  generatedToken.value = token;
+});
 
 const isOnline = ref(false);
 const isCopied = ref(false);
@@ -164,7 +161,8 @@ onUnmounted(stopPolling);
             <button
               type="button"
               @click="copyInstallScript"
-              class="absolute top-2 right-2 z-10 rounded-md border border-border/50 bg-background/80 p-1.5 transition-colors hover:border-border hover:bg-background"
+              :disabled="!generatedToken"
+              class="absolute top-2 right-2 z-10 rounded-md border border-border/50 bg-background/80 p-1.5 transition-colors hover:border-border hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
               :title="isCopied ? 'Copied!' : 'Copy to clipboard'"
             >
               <Check v-if="isCopied" class="h-4 w-4 text-green-500" />

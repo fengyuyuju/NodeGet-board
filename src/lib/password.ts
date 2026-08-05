@@ -1,6 +1,7 @@
 export function generatePassword(length: number = 16): string {
+  // 后端 0.5.17 起 username/password 禁止包含 ':' 或 '|'，charset 需排除
   const charset = [
-    ..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{}|;:,.<>?",
+    ..."abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+[]{};,.<>?",
   ];
 
   const randomValues = new Uint32Array(length);

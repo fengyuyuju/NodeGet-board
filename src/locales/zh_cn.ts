@@ -719,6 +719,8 @@ export default {
       fieldServerName: "主控名称",
       next: "下一步",
       prev: "上一步",
+      tokenGenerateFailed: "预生成 token 失败，请重试",
+      tokenRequired: "尚未生成 token，无法继续",
       cronSection: "开启 Cron",
       storageSection: "数据储存周期",
       staticMonitoring: "静态监控数据 储存周期",

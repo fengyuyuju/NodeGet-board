@@ -30,6 +30,7 @@ import {
   type splitConfig,
 } from "@/composables/useAgentConfig";
 import { compareVersions } from "compare-versions";
+import { agentTokenTargets } from "@/lib/agentToken";
 
 const props = defineProps<{ uuid: string }>();
 
@@ -131,13 +132,15 @@ async function handleDelete() {
     });
   } catch {}
 
-  try {
-    // disable token, stop data report
-    await rpc("token_delete", {
-      token: currentBackend.value?.token,
-      target_token: `[agent]:${props.uuid}`,
-    });
-  } catch {}
+  // disable token, stop data report; 兼容新旧两种 username 格式
+  await Promise.allSettled(
+    agentTokenTargets(props.uuid).map((target_token) =>
+      rpc("token_delete", {
+        token: currentBackend.value?.token,
+        target_token,
+      }),
+    ),
+  );
   setStep(0, "done");
 
   // Step 2: clean cron
