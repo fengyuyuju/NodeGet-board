@@ -37,7 +37,7 @@ const { t } = useI18n();
 
 const jsonText = ref("");
 const jsonErrorMessage = ref("");
-const skipNextTokenSync = ref(false);
+let pendingJsonToken: string | undefined;
 
 const serializedToken = computed(() =>
   JSON.stringify(serializeTokenPayload(props.token), null, 2),
@@ -51,8 +51,9 @@ const submitDisabled = computed(
 watch(
   serializedToken,
   (value) => {
-    if (skipNextTokenSync.value) {
-      skipNextTokenSync.value = false;
+    const isJsonUpdate = value === pendingJsonToken;
+    pendingJsonToken = undefined;
+    if (isJsonUpdate) {
       return;
     }
 
@@ -76,7 +77,11 @@ const handleJsonChange = (value: string) => {
         ? result.dataIssues.map(formatJsonIssue).join(" ")
         : "";
 
-    skipNextTokenSync.value = true;
+    pendingJsonToken = JSON.stringify(
+      serializeTokenPayload(result.token),
+      null,
+      2,
+    );
     emits("update:token", result.token);
   } catch (error) {
     jsonErrorMessage.value = t("dashboard.token.previeJSON.invalidJson", {

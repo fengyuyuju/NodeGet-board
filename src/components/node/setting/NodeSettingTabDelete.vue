@@ -30,7 +30,8 @@ import {
   type splitConfig,
 } from "@/composables/useAgentConfig";
 import { compareVersions } from "compare-versions";
-import { agentTokenTargets } from "@/lib/agentToken";
+import { withAgentTokenTargets } from "@/lib/agentToken";
+import { coreVersion, splitNodeVersion } from "@/utils/nodeVersion";
 
 const props = defineProps<{ uuid: string }>();
 
@@ -87,10 +88,6 @@ function setStep(i: number, status: "running" | "done") {
   progress.value = Math.round(((i + (status === "done" ? 1 : 0)) / 4) * 100);
 }
 
-function extractVersion(version: string) {
-  return version.split("-")[0] || "";
-}
-
 async function handleDelete() {
   const rpc = makeRpcFunction();
 
@@ -99,7 +96,10 @@ async function handleDelete() {
     toast.error("未成功获得版本号，请检查主控是否在线");
     return;
   }
-  const version = extractVersion(currentBackendInfo.value?.version);
+  // 功能版本检查使用数字部分，预发布和 nightly 与同号正式版一样支持删除。
+  const version = coreVersion(
+    splitNodeVersion(currentBackendInfo.value.version).version,
+  );
   if (compareVersions(version, "0.3.3") < 0) {
     toast.error("主控版本号太低，请先将版本号升级到0.3.3以上");
     return;
@@ -125,22 +125,22 @@ async function handleDelete() {
       );
     } catch {}
 
-    // disable token, stop data report
+    // 先按实际连接凭据中的 key 撤销上游 Token，停止数据上报。
     await rpc("token_delete", {
       token: currentBackend.value?.token,
       target_token: currentUpstream.token.split(":")[0],
     });
   } catch {}
 
-  // disable token, stop data report; 兼容新旧两种 username 格式
-  await Promise.allSettled(
-    agentTokenTargets(props.uuid).map((target_token) =>
+  // 补充清理可能共存的三种用户名；其他错误停止兼容尝试，保留尽力删除的流程。
+  try {
+    await withAgentTokenTargets(props.uuid, (target_token) =>
       rpc("token_delete", {
         token: currentBackend.value?.token,
         target_token,
       }),
-    ),
-  );
+    );
+  } catch {}
   setStep(0, "done");
 
   // Step 2: clean cron

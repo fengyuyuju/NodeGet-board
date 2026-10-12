@@ -42,6 +42,7 @@ import {
 } from "lucide-vue-next";
 import { useTokenListHook, type Token } from "@/composables/token/useTokenList";
 import { getPasswordChangeValidationError } from "@/composables/token/tokenSecret";
+import { decodeTokenUsername } from "@/lib/tokenUsername";
 import TokenSuccessDialog from "../components/TokenSuccessDialog.vue";
 
 const useTokenList = useTokenListHook();
@@ -85,7 +86,11 @@ const filteredTokens = computed(() => {
 
   return tokensList.value.filter((token) => {
     const matchesUsername =
-      !keyword || normalizeSearchText(token.username).includes(keyword);
+      !keyword ||
+      normalizeSearchText(token.username).includes(keyword) ||
+      normalizeSearchText(decodeTokenUsername(token.username ?? "")).includes(
+        keyword,
+      );
     const matchesTokenKey =
       !keyword || normalizeSearchText(token.token_key).includes(keyword);
 
@@ -351,7 +356,9 @@ watch(changePasswordOpen, (open) => {
         <TableBody>
           <TableRow v-for="token in pagedTokens" :key="token.token_key">
             <TableCell>{{ token.version }}</TableCell>
-            <TableCell>{{ token.username }}</TableCell>
+            <TableCell>{{
+              decodeTokenUsername(token.username ?? "")
+            }}</TableCell>
             <TableCell class="font-mono">{{ token.token_key }}</TableCell>
             <TableCell>{{ token.token_limit?.length ?? 0 }}</TableCell>
             <TableCell class="flex w-32 gap-2">
@@ -500,7 +507,9 @@ watch(changePasswordOpen, (open) => {
               {{ t("dashboard.token.list.table.username") }}:
             </span>
             <span class="ml-2">
-              {{ selectedResetToken?.username || "-" }}
+              {{
+                decodeTokenUsername(selectedResetToken?.username ?? "") || "-"
+              }}
             </span>
           </div>
           <div>
@@ -551,7 +560,10 @@ watch(changePasswordOpen, (open) => {
               {{ t("dashboard.token.list.table.username") }}:
             </span>
             <span class="ml-2">
-              {{ selectedPasswordToken?.username || "-" }}
+              {{
+                decodeTokenUsername(selectedPasswordToken?.username ?? "") ||
+                "-"
+              }}
             </span>
           </div>
           <div>

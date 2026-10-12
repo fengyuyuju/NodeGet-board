@@ -2,8 +2,7 @@ import { useBackendStore } from "@/composables/useBackendStore";
 import { getWsConnection } from "@/composables/useWsConnection";
 import { AGENT_TEMPLATE_PERMISSIONS } from "@/components/token/tokenTemplates.ts";
 import { generatePassword } from "@/lib/password";
-import { makeRpcFunction } from "@/composables/useWsConnection";
-import { agentTokenTargets, agentTokenUsername } from "@/lib/agentToken";
+import { withAgentTokenTargets, agentTokenUsername } from "@/lib/agentToken";
 
 const { currentBackend } = useBackendStore();
 
@@ -21,7 +20,6 @@ function makeTokenObject(nodeUuid: string) {
     version: 1,
     token_limit: [
       {
-        // scopes: [{ global: null }],
         scopes: [
           {
             agent_uuid: nodeUuid,
@@ -33,7 +31,13 @@ function makeTokenObject(nodeUuid: string) {
   };
 }
 
-// 预生成 token
+/**
+ * 预生成节点连接用的 Agent Token。
+ * @param nodeUuid 节点 UUID。
+ * @param backend 创建 Token 使用的后端引用，默认使用当前后端。
+ * @returns 连接凭据或可展示的失败信息。
+ * @throws 无，RPC 错误会转换为返回值中的 error。
+ */
 export async function preGenerateToken(
   nodeUuid: string,
   backend = currentBackend,
@@ -56,6 +60,13 @@ export async function preGenerateToken(
   }
 }
 
+/**
+ * 尽力清理节点已有的各格式 Token 后创建新连接凭据。
+ * @param nodeUuid 节点 UUID。
+ * @param backend 清理和创建 Token 使用的后端引用。
+ * @returns 新连接凭据或失败信息。
+ * @throws 无，清理失败不阻止创建，其他错误转换为返回值中的 error。
+ */
 export async function reGenerateToken(
   nodeUuid: string,
   backend = currentBackend,
@@ -63,41 +74,47 @@ export async function reGenerateToken(
   if (!backend.value) return { token: null, error: "no_backend" };
   try {
     const current = backend.value;
-    // 尽力清理新旧两种格式的旧 token，失败不影响后续创建
-    await Promise.allSettled(
-      agentTokenTargets(nodeUuid).map((target_token) =>
+    // 清理兼容格式时仅忽略不存在；其他错误停止清理，但保留尽力创建的行为。
+    try {
+      await withAgentTokenTargets(nodeUuid, (target_token) =>
         getWsConnection(current.url).call("token_delete", {
           token: current.token,
           target_token,
         }),
-      ),
-    );
+      );
+    } catch {}
     return await preGenerateToken(nodeUuid, backend);
   } catch (e) {
     return { token: null, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
+/**
+ * 为节点所有仍存在的兼容格式 Token 更新权限。
+ * @param nodeUuid 节点 UUID。
+ * @param backend 更新权限使用的后端引用。
+ * @returns 操作完成后的 Promise；无后端时直接返回。
+ * @throws 无，全部不存在或其他操作失败时记录错误日志。
+ */
 export async function upgradeTokenLimit(
   nodeUuid: string,
   backend = currentBackend,
 ) {
   if (!backend.value) return;
-  const rpc = makeRpcFunction();
+  const { url, token } = backend.value;
   const limit = makeTokenObject(nodeUuid).token_limit;
-  // 新旧两种格式的 token 都尝试更新，单一目标不存在属预期情况；全部失败才记录
-  let updated = false;
-  for (const target_token of agentTokenTargets(nodeUuid)) {
-    try {
-      await rpc("token_edit", {
-        token: backend.value.token,
+  try {
+    const updated = await withAgentTokenTargets(nodeUuid, (target_token) =>
+      getWsConnection(url).call("token_edit", {
+        token,
         target_token,
         limit,
-      });
-      updated = true;
-    } catch {}
-  }
-  if (!updated) {
-    console.error("Token update failed for all username formats:", nodeUuid);
+      }),
+    );
+    if (!updated) {
+      console.error("Token update failed for all username formats:", nodeUuid);
+    }
+  } catch (error) {
+    console.error("Token update failed:", error);
   }
 }

@@ -77,7 +77,7 @@ test("aggregateCosts normalizes mixed currencies and mixed billing cycles into m
   const nodes: CostNodeRecord[] = [
     {
       id: "usd",
-      name: "usd-node",
+      customName: "usd-node",
       price: 30,
       priceUnit: "$",
       priceCycle: 30,
@@ -85,7 +85,7 @@ test("aggregateCosts normalizes mixed currencies and mixed billing cycles into m
     },
     {
       id: "eur",
-      name: "eur-node",
+      customName: "eur-node",
       price: 36.5,
       priceUnit: "€",
       priceCycle: 365,
@@ -93,7 +93,7 @@ test("aggregateCosts normalizes mixed currencies and mixed billing cycles into m
     },
     {
       id: "gbp",
-      name: "gbp-node",
+      customName: "gbp-node",
       price: 109.5,
       priceUnit: "£",
       priceCycle: 1095,
@@ -101,7 +101,7 @@ test("aggregateCosts normalizes mixed currencies and mixed billing cycles into m
     },
     {
       id: "cny",
-      name: "cny-node",
+      customName: "cny-node",
       price: 72,
       priceUnit: "¥",
       priceCycle: 30,
@@ -129,7 +129,7 @@ test("aggregateCosts excludes unsupported currencies from unified totals and rep
   const nodes: CostNodeRecord[] = [
     {
       id: "supported",
-      name: "supported-node",
+      customName: "supported-node",
       price: 30,
       priceUnit: "$",
       priceCycle: 30,
@@ -137,7 +137,7 @@ test("aggregateCosts excludes unsupported currencies from unified totals and rep
     },
     {
       id: "unsupported",
-      name: "unsupported-node",
+      customName: "unsupported-node",
       price: 100,
       priceUnit: "₽",
       priceCycle: 30,
@@ -161,7 +161,7 @@ test("aggregateCosts falls back to grouped currency summaries when fx snapshot i
   const nodes: CostNodeRecord[] = [
     {
       id: "usd",
-      name: "usd-node",
+      customName: "usd-node",
       price: 30,
       priceUnit: "$",
       priceCycle: 30,
@@ -169,7 +169,7 @@ test("aggregateCosts falls back to grouped currency summaries when fx snapshot i
     },
     {
       id: "eur",
-      name: "eur-node",
+      customName: "eur-node",
       price: 36.5,
       priceUnit: "€",
       priceCycle: 365,
@@ -199,7 +199,7 @@ test("aggregateCosts excludes expired nodes from monthly totals while keeping re
   const nodes: CostNodeRecord[] = [
     {
       id: "active",
-      name: "active-node",
+      customName: "active-node",
       price: 30,
       priceUnit: "$",
       priceCycle: 30,
@@ -207,7 +207,7 @@ test("aggregateCosts excludes expired nodes from monthly totals while keeping re
     },
     {
       id: "expired",
-      name: "expired-node",
+      customName: "expired-node",
       price: 30,
       priceUnit: "$",
       priceCycle: 30,
@@ -239,7 +239,7 @@ test("expired unsupported nodes do not surface unsupported currency warnings", (
   const nodes: CostNodeRecord[] = [
     {
       id: "expired-unsupported",
-      name: "expired-unsupported",
+      customName: "expired-unsupported",
       price: 100,
       priceUnit: "₽",
       priceCycle: 30,

@@ -1,3 +1,7 @@
+import {
+  decodeTokenUsername,
+  encodeTokenUsername,
+} from "../../lib/tokenUsername.ts";
 import type {
   PermissionEntry,
   Token,
@@ -165,14 +169,25 @@ export const generateUuid = () => {
   });
 };
 
+/**
+ * 构造可发送的凭据；按去空白后的值判断是否改名，未改名时保留服务端原值。
+ * @param source 表单凭据及可选的服务端原始用户名。
+ * @returns 原始或单次编码的用户名及去空白后的密码；空字段省略。
+ * @throws 无。
+ */
 export const buildCredentialPayload = (
-  source: Pick<Token, "username" | "password">,
+  source: Pick<Token, "username" | "password" | "originalUsername">,
 ) => {
   const username = source.username.trim();
   const password = source.password.trim();
+  const wireUsername =
+    source.originalUsername !== undefined &&
+    username === decodeTokenUsername(source.originalUsername).trim()
+      ? source.originalUsername
+      : encodeTokenUsername(username);
 
   return {
-    ...(username ? { username } : {}),
+    ...(username ? { username: wireUsername } : {}),
     ...(password ? { password } : {}),
   };
 };
@@ -180,10 +195,20 @@ export const buildCredentialPayload = (
 const toOptionalTimestamp = (value: number) =>
   Number.isFinite(value) && value > 0 ? value : undefined;
 
+/**
+ * 构造 RPC 的可选凭据和有效时间字段，内部用户名来源记录不会被输出。
+ * @param token 表单凭据、原始用户名和时间范围。
+ * @returns 可发送的可选字段，非正数或非有限时间不输出。
+ * @throws 无。
+ */
 export const buildOptionalFieldPayload = (
   token: Pick<
     Token,
-    "username" | "password" | "timestamp_from" | "timestamp_to"
+    | "username"
+    | "originalUsername"
+    | "password"
+    | "timestamp_from"
+    | "timestamp_to"
   >,
 ) => {
   const timestampFrom = toOptionalTimestamp(token.timestamp_from);
@@ -196,18 +221,33 @@ export const buildOptionalFieldPayload = (
   };
 };
 
+/**
+ * 将表单转换成 RPC 和可编辑 JSON 使用的数据，不输出内部元数据。
+ * @param token Token 表单。
+ * @returns 包含版本、权限和可选字段的服务端格式数据。
+ * @throws 无。
+ */
 export const serializeTokenPayload = (token: Token) => ({
   version: token.version ?? 1,
   token_limit: buildLimitPayload(token),
   ...buildOptionalFieldPayload(token),
 });
 
+/**
+ * 把服务端详情转换成可编辑表单，并将用户名解码一次。
+ * @param detail 服务端原始详情；为空时创建默认表单。
+ * @returns 使用展示用户名并记录原始用户名的 Token 表单，密码保持服务端原值。
+ * @throws 无。
+ */
 export const mapTokenDetailToForm = (detail: TokenDetail | null): Token => {
   if (!detail) return createDefaultToken();
 
   return {
     version: detail.version ?? 1,
-    username: detail.username ?? "",
+    username: decodeTokenUsername(detail.username ?? ""),
+    ...(typeof detail.username === "string"
+      ? { originalUsername: detail.username }
+      : {}),
     password: detail.password ?? "",
     timestamp_from: detail.timestamp_from ?? 0,
     timestamp_to: detail.timestamp_to ?? 0,

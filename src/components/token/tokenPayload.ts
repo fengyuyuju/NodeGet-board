@@ -1,13 +1,15 @@
 import {
   DEFAULT_SCOPE,
+  buildCredentialPayload,
   cloneTokenLimitEntries,
   createDefaultToken,
   generateUuid,
   normalizePermissions,
   normalizeScopes,
-} from "./scopeCodec";
+} from "./scopeCodec.ts";
 import type { PermissionEntry, Token, TokenLimitEntry } from "./type";
-import { TASK_NAME_LIST } from "@/types/task";
+import { TASK_NAME_LIST } from "../../types/task.ts";
+import { decodeTokenUsername } from "../../lib/tokenUsername.ts";
 
 const STATIC_MONITORING_READ_FIELDS = new Set(["cpu", "system", "gpu"]);
 const DYNAMIC_MONITORING_FIELDS = new Set([
@@ -272,6 +274,12 @@ const resetImportedScopes = (token: Token): Token => {
   };
 };
 
+/**
+ * 校验服务端格式数据并转为表单，用户名在此边界解码一次。
+ * @param payload 已解析的 JSON 数据。
+ * @returns 不携带已有 Token 编辑来源记录的新表单。
+ * @throws {Error} 数据结构、字段类型或权限内容无效时抛出校验错误。
+ */
 export const parseTokenPayloadObject = (payload: unknown): Token => {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
     throw new Error("invalid_token_payload");
@@ -283,7 +291,9 @@ export const parseTokenPayloadObject = (payload: unknown): Token => {
   return {
     ...token,
     version: ensureFiniteNumber(source.version, "version"),
-    username: ensureOptionalString(source.username, "username"),
+    username: decodeTokenUsername(
+      ensureOptionalString(source.username, "username"),
+    ),
     password: ensureOptionalString(source.password, "password"),
     timestamp_from: ensureOptionalFiniteNumber(
       source.timestamp_from,
@@ -297,6 +307,12 @@ export const parseTokenPayloadObject = (payload: unknown): Token => {
   };
 };
 
+/**
+ * 解析完整的服务端格式 JSON，并转换成使用展示用户名的表单。
+ * @param value 服务端格式 JSON 文本。
+ * @returns 校验通过的新表单。
+ * @throws {Error} 文本为空、JSON 无效或数据校验失败时抛出错误。
+ */
 export const parseTokenPayloadJson = (value: string): Token => {
   const source = value.trim();
   if (!source) {
@@ -307,6 +323,12 @@ export const parseTokenPayloadJson = (value: string): Token => {
   return parseTokenPayloadObject(parsed);
 };
 
+/**
+ * 将导入的服务端格式数据转换成新表单，沿用导入后缀及缺失密码的生成规则。
+ * @param payload 导入的 JSON 数据。
+ * @returns 不携带已有用户名来源记录的导入表单。
+ * @throws {Error} 数据结构、字段类型或权限校验失败时抛出错误。
+ */
 export const mapImportedTokenToForm = (payload: unknown): Token => {
   const parsed = parseTokenPayloadObject(payload);
   const username = withImportedUsernameSuffix(parsed.username);
@@ -318,6 +340,13 @@ export const mapImportedTokenToForm = (payload: unknown): Token => {
   });
 };
 
+/**
+ * 把服务端格式的部分 JSON 字段应用到表单，保留未改变的已有用户名身份。
+ * @param baseToken 当前表单及可选的服务端用户名来源记录。
+ * @param payload 已解析的部分服务端格式数据。
+ * @returns 更新后的表单和无效字段列表；用户名改变时解码一次并清除来源记录。
+ * @throws 无，字段校验错误转为 dataIssues，原字段保留。
+ */
 export const applyPartialTokenPayload = (
   baseToken: Token,
   payload: unknown,
@@ -348,7 +377,13 @@ export const applyPartialTokenPayload = (
 
   if ("username" in source) {
     try {
-      nextToken.username = ensureOptionalString(source.username, "username");
+      const username = ensureOptionalString(source.username, "username");
+      const currentWireUsername =
+        buildCredentialPayload(baseToken).username ?? "";
+      if (username !== currentWireUsername) {
+        nextToken.username = decodeTokenUsername(username);
+        delete nextToken.originalUsername;
+      }
     } catch (error) {
       dataIssues.push((error as Error).message);
     }

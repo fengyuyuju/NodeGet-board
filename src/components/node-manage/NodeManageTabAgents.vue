@@ -55,10 +55,17 @@ import AddAgentDialog from "@/components/agents/AddAgentDialog.vue";
 import ShowAgentCommandDialog from "@/components/agents/ShowAgentCommandDialog.vue";
 import { useAgentInfo } from "@/composables/useAgentInfo";
 import VersionDialog from "@/components/node-manage/VersionDialog.vue";
+import VersionBadge from "@/components/node-manage/VersionBadge.vue";
 import { PopConfirm } from "@/components/ui/pop-confirm";
 import { useLifecycle } from "@/composables/useLifecycle";
 
 import { compareVersions } from "compare-versions";
+import {
+  coreVersion,
+  isSameVersion,
+  isStableRelease,
+  splitNodeVersion,
+} from "@/utils/nodeVersion";
 import { useTask } from "@/composables/useTask";
 import { delay } from "@/lib/delay";
 import { applyPostProces } from "@/lib/migration";
@@ -220,8 +227,8 @@ const latestVersion = computed(() => {
   return sorted[sorted.length - 1] as string;
 });
 
-function extractVersion(version: string) {
-  return version.split("-")[0] || "";
+function nodeVersion(rawVersion: string | undefined | null) {
+  return splitNodeVersion(rawVersion || "").version;
 }
 
 const upgradeStatus = ref<Map<string, "waiting" | "upgrading" | "confirming">>(
@@ -236,15 +243,16 @@ async function confirmVersion(version: string) {
     return;
   }
   const uuids = pendingUpdateUUIDs.value.filter((uuid) => {
-    let oldVersion = agents.value.find((v) => v.uuid === uuid)?.version;
-    if (!oldVersion) {
+    const rawVersion = agents.value.find((v) => v.uuid === uuid)?.version;
+    if (!rawVersion) {
       return false;
     }
-    oldVersion = extractVersion(oldVersion);
-    if (compareVersions(oldVersion, "0.1.3") < 0) {
+    const oldVersion = nodeVersion(rawVersion);
+    // 最低功能版本按数字部分判断，rc、nightly 同样支持 API 升级。
+    if (compareVersions(coreVersion(oldVersion), "0.1.3") < 0) {
       return false;
     }
-    return compareVersions(version, oldVersion) !== 0;
+    return !isSameVersion(version, oldVersion);
   });
 
   if (uuids.length === 0) {
@@ -259,13 +267,14 @@ async function confirmVersion(version: string) {
     upgradeStatus.value.set(uuid, "waiting");
   }
 
+  let failedCount = 0;
   for (let i = 0, len = uuids.length; i < len; i++) {
     const uuid = uuids[i] as string;
     const agent = agents.value.find((v) => v.uuid === uuid);
     if (!agent) {
       continue;
     }
-    const oldVersion = extractVersion(agent.version || "");
+    const oldVersion = nodeVersion(agent.version);
 
     upgradeStatus.value.set(uuid, "upgrading");
     await createSelfUpdateTask(uuid, "v" + version, false);
@@ -279,16 +288,13 @@ async function confirmVersion(version: string) {
     for (let j = 0; j < maxWait; j += waitInterval) {
       try {
         await fetchAgentVersion(agent, waitInterval);
-        // console.debug({
-        //   currentVersion: extractVersion(agent.version || ""),
-        //   targetVersion: version,
-        // });
-        if (extractVersion(agent.version || "") === version) {
+        // 保留后缀确认实际版本，不能将仍在运行的同号 rc/nightly 视为升级完成。
+        if (nodeVersion(agent.version) === version) {
           upgradeStatus.value.delete(uuid);
           finished = true;
 
           try {
-            await applyPostProces(uuid, oldVersion, version);
+            await applyPostProces(uuid, coreVersion(oldVersion), version);
           } catch (error) {
             console.error("升级后处理失败", error);
             toast.error(
@@ -306,13 +312,16 @@ async function confirmVersion(version: string) {
     }
     upgradeStatus.value.delete(uuid);
     if (!finished) {
-      toast.success(
+      failedCount++;
+      toast.error(
         `agent ${agent.metadata?.customName || agent.uuid} 升级失败, 请尝试手动升级`,
       );
     }
   }
 
-  toast.success("agent升级完成");
+  if (failedCount === 0) {
+    toast.success("agent升级完成");
+  }
 }
 
 async function reinitAgent(uuid: string) {
@@ -333,9 +342,9 @@ function fetchVersion() {
   return fetch(`https://api.github.com/repos/${repo}/releases`)
     .then((r) => r.json())
     .then((r) =>
-      (r as { tag_name: string }[])
-        .map((v) => v.tag_name)
-        .filter((v) => v.startsWith("v")),
+      (r as { tag_name: string; prerelease: boolean; draft: boolean }[])
+        .filter(isStableRelease)
+        .map((v) => v.tag_name),
     )
     .then((r) => {
       availableVersions.value = r;
@@ -521,12 +530,15 @@ refresh();
               v-if="!upgradeStatus.has(agent.uuid)"
             >
               <span :title="agent.version || ''">
-                {{ agent.version?.slice(0, 20) || "--" }}
+                {{ nodeVersion(agent.version) || "--" }}
               </span>
               <template v-if="agent.version">
                 <TooltipProvider
                   v-if="
-                    compareVersions(extractVersion(agent.version), '0.1.3') < 0
+                    compareVersions(
+                      coreVersion(nodeVersion(agent.version)),
+                      '0.1.3',
+                    ) < 0
                   "
                 >
                   <Tooltip>
@@ -558,25 +570,11 @@ refresh();
                   </Tooltip>
                 </TooltipProvider>
 
-                <template v-else-if="availableVersions.length">
-                  <Badge
-                    variant="outline"
-                    v-if="
-                      compareVersions(
-                        extractVersion(agent.version),
-                        latestVersion,
-                      ) < 0
-                    "
-                    class="ml-2 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                    >可更新</Badge
-                  >
-                  <Badge
-                    variant="outline"
-                    v-else
-                    class="ml-2 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300"
-                    >最新版本</Badge
-                  >
-                </template>
+                <VersionBadge
+                  v-else-if="availableVersions.length"
+                  :version="nodeVersion(agent.version)"
+                  :latest="latestVersion"
+                />
               </template>
             </TableCell>
             <TableCell v-else>

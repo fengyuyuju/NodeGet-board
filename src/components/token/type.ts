@@ -1,5 +1,7 @@
 export type Token = {
   username: string;
+  /** 服务端原始用户名，仅在表单未改名时保留已有身份，不参与 RPC 或 JSON 序列化。 */
+  originalUsername?: string;
   password: string;
   timestamp_from: number;
   timestamp_to: number;

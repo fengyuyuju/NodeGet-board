@@ -11,11 +11,15 @@
  */
 
 import { useBackendStore } from "@/composables/useBackendStore";
+import { RpcError } from "@/lib/rpcError";
+
+export { RpcError } from "@/lib/rpcError";
 
 const { currentBackend } = useBackendStore();
 const HEARTBEAT_INTERVAL_MS = 30_000;
 
 interface RpcErrorShape {
+  code?: unknown;
   message?: unknown;
   data?: unknown;
 }
@@ -176,7 +180,10 @@ class WsConnection {
 
     if (msg.error) {
       req.reject(
-        new Error(formatRpcError(msg.error) || `${req.method} rpc error`),
+        new RpcError(
+          formatRpcError(msg.error) || `${req.method} rpc error`,
+          (msg.error as RpcErrorShape).code,
+        ),
       );
       return;
     }
