@@ -1,0 +1,53 @@
+name: build
+
+# 可复用的构建流程：构建面板并打包成 nodeget-board.zip / nodeget-board.tar.gz，上传为 artifact。
+# 由 ci.yml（拉取请求）、release.yml（正式版和预发布）、nightly.yml 调用。
+# 本流程只构建，不发布任何东西。
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: 0
+
+      - name: Build
+        run: pnpm build
+
+      - name: Package
+        run: |
+          zip -r nodeget-board.zip dist
+          tar -czvf nodeget-board.tar.gz dist
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: board-package
+          path: |
+            nodeget-board.zip
+            nodeget-board.tar.gz
+          if-no-files-found: error
+          retention-days: 14

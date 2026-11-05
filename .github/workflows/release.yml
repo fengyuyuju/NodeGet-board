@@ -1,0 +1,166 @@
+name: release
+
+# 正式版和预发布：手动触发，版本号取自 package.json 的 version，tag 为 v + 版本号。
+# 版本号带预发布后缀（如 0.2.0-rc.1、0.2.0-beta.1）时发布为预发布：不标记为 Latest。
+# 不勾选 publish_release 时只构建，用于试跑。
+#
+# 发布日志由 GitHub 自动生成：列出上一个版本之后合并的 PR。上一个版本是 GitHub 按提交历史判断的，
+# 所以发版时「Use workflow from」要选 main：上一个版本的 tag 在 main 的历史里，起点才是对的；
+# 从 dev 发的话，起点可能错到更早的版本，日志里会列出大量早已发布过的 PR。
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: "Create/update the GitHub Release"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: release
+  queue: max
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Prepare release
+    runs-on: ubuntu-latest
+    outputs:
+      publish: ${{ steps.release.outputs.publish }}
+      tag: ${{ steps.release.outputs.tag }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release mode
+        id: release
+        shell: bash
+        env:
+          PUBLISH: ${{ inputs.publish_release }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="v${version}"
+
+          # 严格按 SemVer 2.0.0 校验，纯数字预发布标识禁止前导零，构建标识允许。
+          if [[ "${PUBLISH}" == "true" ]]; then
+            # 固定 ASCII 范围，避免运行器区域设置影响字符校验。
+            export LC_ALL=C
+            core_number='(0|[1-9][0-9]*)'
+            prerelease_identifier='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+            build_identifier='[0-9A-Za-z-]+'
+            semver_pattern="^v${core_number}\.${core_number}\.${core_number}(-${prerelease_identifier}(\.${prerelease_identifier})*)?(\+${build_identifier}(\.${build_identifier})*)?$"
+            if [[ ! "${tag}" =~ ${semver_pattern} ]]; then
+              echo "release tag must look like v0.3.7 when publishing, got: ${tag}" >&2
+              exit 1
+            fi
+            if ! git check-ref-format "refs/tags/${tag}"; then
+              echo "release tag is not a valid Git ref: ${tag}" >&2
+              exit 1
+            fi
+            # package.json 里的 0.0.0 是占位值，不应该被发布
+            if [[ "${version}" == "0.0.0" ]]; then
+              echo "package.json version is still the placeholder 0.0.0, set a real version before publishing" >&2
+              exit 1
+            fi
+          fi
+
+          # tag 带预发布后缀（如 v0.2.0-rc.1、v0.2.0-beta.1）即为预发布
+          prerelease="false"
+          if [[ "${tag}" =~ ^v[0-9.]+- ]]; then
+            prerelease="true"
+          fi
+
+          echo "publish=${PUBLISH}" >> "${GITHUB_OUTPUT}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          echo "prerelease=${prerelease}" >> "${GITHUB_OUTPUT}"
+
+  build:
+    name: Build
+    needs: prepare
+    uses: ./.github/workflows/build.yml
+
+  publish-release:
+    name: Publish GitHub Release
+    needs:
+      - prepare
+      - build
+    if: needs.prepare.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: board-package
+          path: dist
+
+      - name: Validate release tag
+        id: validate_tag
+        shell: bash
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          if refs=$(git ls-remote --exit-code origin "refs/tags/${TAG}" "refs/tags/${TAG}^{}"); then
+            direct=""
+            peeled=""
+            while IFS= read -r line; do
+              if [[ ! "${line}" =~ ^([0-9a-f]{40})$'\t'(.+)$ ]]; then
+                echo "Malformed remote tag response for ${TAG}" >&2
+                exit 1
+              fi
+              sha="${BASH_REMATCH[1]}"
+              ref="${BASH_REMATCH[2]}"
+              case "${ref}" in
+                "refs/tags/${TAG}")
+                  if [[ -n "${direct}" ]]; then
+                    echo "Duplicate remote tag ref for ${TAG}" >&2
+                    exit 1
+                  fi
+                  direct="${sha}"
+                  ;;
+                "refs/tags/${TAG}^{}")
+                  if [[ -n "${peeled}" ]]; then
+                    echo "Duplicate peeled tag ref for ${TAG}" >&2
+                    exit 1
+                  fi
+                  peeled="${sha}"
+                  ;;
+                *)
+                  echo "Unexpected remote tag ref: ${ref}" >&2
+                  exit 1
+                  ;;
+              esac
+            done <<< "${refs}"
+            # 注解标签的直接 SHA 属于标签对象，必须使用剥离后的提交进行比较。
+            if [[ -z "${direct}" || "${peeled:-${direct}}" != "${GITHUB_SHA}" ]]; then
+              echo "Release tag ${TAG} does not point to ${GITHUB_SHA}" >&2
+              exit 1
+            fi
+          else
+            status=$?
+            if [[ "${status}" -ne 2 || -n "${refs}" ]]; then
+              echo "Unable to validate remote tag ${TAG} (git exit ${status})" >&2
+              exit 1
+            fi
+          fi
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: NodeGet Board ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+          make_latest: ${{ needs.prepare.outputs.prerelease != 'true' }}
+          # 让 GitHub 按上一个版本到本版本之间合并的 PR 自动生成发布日志
+          generate_release_notes: true
+          files: dist/*

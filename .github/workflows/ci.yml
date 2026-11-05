@@ -1,0 +1,22 @@
+name: ci
+
+# 拉取请求只构建检查，确认能构建通过，不发布任何东西。
+# 发布见 release.yml（正式版和预发布）和 nightly.yml。
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    uses: ./.github/workflows/build.yml
